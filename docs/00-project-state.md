@@ -1,9 +1,9 @@
 # Estado do projeto — Aedon
 
-- Atualizado em: 2026-09-26.
+- Atualizado em: 2026-10-29.
 - Tipo: projeto existente, adotado para registro de fluxo nesta revisão do editor.
 - Fase: implementação local concluída.
-- Atividade: interação contextual de seleção e edição de elementos no canvas.
+- Atividade: simplificação da interface do editor (topo, seleção, painéis, biblioteca e dashboard).
 - Responsável nesta etapa: implementação de UI.
 - Estado: validado localmente; sem publicação solicitada.
 - Evidência: código do editor em `src/components/editor/` e tokens em `docs/design-tokens.md`.

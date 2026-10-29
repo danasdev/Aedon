@@ -10,10 +10,27 @@ import {
   Pencil,
   LogOut,
   FileText,
-  ArrowRight,
   Check,
+  MoreHorizontal,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AedonMark } from "@/components/editor/AedonMark";
 import { isSupabaseEnabled } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth";
@@ -121,7 +138,6 @@ function Dashboard({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir este projeto? Essa ação não pode ser desfeita.")) return;
     setBusy(true);
     setError(null);
     try {
@@ -166,7 +182,6 @@ function Dashboard({
         )}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between mb-8">
           <div className="max-w-xl">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-2">Seu espaço de trabalho</p>
             <h1 className="text-2xl sm:text-3xl font-display font-medium tracking-tight">Meus projetos</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {projects === null
@@ -194,7 +209,6 @@ function Dashboard({
           <EmptyProjects onCreate={handleCreate} busy={busy} />
         ) : (
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <NewProjectCard onCreate={handleCreate} busy={busy} />
             {projects.map((p) => (
               <ProjectCard
                 key={p.id}
@@ -226,6 +240,7 @@ function ProjectCard({
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName] = useState(project.name);
 
   const commitRename = () => {
@@ -236,24 +251,23 @@ function ProjectCard({
   };
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-white/[0.02] hover:border-foreground/30 hover:bg-white/[0.035] transition-colors overflow-hidden">
+    <article className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] transition-colors hover:border-foreground/30 hover:bg-white/[0.035]">
       <button
         onClick={onOpen}
-        className="group relative w-full aspect-[4/3] bg-black flex items-center justify-center border-b border-white/5 text-left"
+        className="group relative flex aspect-[4/3] w-full items-center justify-center border-b border-white/5 bg-black text-left"
         aria-label={`Abrir ${project.name}`}
       >
-        <div className="absolute inset-x-5 top-5 space-y-2 opacity-30 group-hover:opacity-50 transition-opacity">
+        <div className="absolute inset-x-5 top-5 space-y-2 opacity-30 transition-opacity group-hover:opacity-50">
           <div className="h-2 w-2/5 rounded-full bg-white" />
           <div className="h-1.5 w-full rounded-full bg-white/60" />
           <div className="h-1.5 w-4/5 rounded-full bg-white/60" />
         </div>
-        <AedonMark className="w-8 h-8 opacity-25 group-hover:opacity-50 transition-opacity" />
-        <span className="absolute bottom-4 left-4 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity">Abrir editor</span>
+        <AedonMark className="h-8 w-8 opacity-25 transition-opacity group-hover:opacity-50" />
       </button>
-      <div className="p-4">
+      <div className="flex items-center gap-2 p-3">
         {editing ? (
           <form
-            className="flex gap-1"
+            className="flex min-w-0 flex-1 gap-1"
             onSubmit={(e) => {
               e.preventDefault();
               commitRename();
@@ -269,69 +283,74 @@ function ProjectCard({
                   setEditing(false);
                 }
               }}
-              className="min-w-0 flex-1 text-sm font-medium bg-input/60 border border-border rounded px-2 py-1 outline-none focus:border-foreground/40"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-input/60 px-2.5 text-sm font-medium outline-none focus:border-foreground/40"
               aria-label="Nome do projeto"
             />
             <IconBtn title="Salvar nome" onClick={commitRename}>
-              <Check className="w-3 h-3" />
+              <Check className="h-4 w-4" />
             </IconBtn>
-            <IconBtn title="Cancelar" onClick={() => { setName(project.name); setEditing(false); }}>
-              <X className="w-3 h-3" />
+            <IconBtn
+              title="Cancelar"
+              onClick={() => {
+                setName(project.name);
+                setEditing(false);
+              }}
+            >
+              <X className="h-4 w-4" />
             </IconBtn>
           </form>
         ) : (
-          <button
-            onClick={onOpen}
-            className="text-sm font-medium text-left truncate block w-full hover:underline"
-            title={project.name}
-          >
-            {project.name}
-          </button>
-        )}
-        <div className="flex items-center justify-between mt-1.5">
-          <span className="text-[11px] text-muted-foreground">
-            {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}
-          </span>
-          <div className="flex items-center gap-0.5">
-            <IconBtn title="Renomear" onClick={() => setEditing(true)}>
-              <Pencil className="w-3 h-3" />
-            </IconBtn>
-            <IconBtn title="Duplicar" onClick={onDuplicate}>
-              <Copy className="w-3 h-3" />
-            </IconBtn>
-            <IconBtn title="Excluir" onClick={onDelete}>
-              <Trash2 className="w-3 h-3" />
-            </IconBtn>
-          </div>
-        </div>
-        {!editing && (
-          <button
-            onClick={onOpen}
-            className="mt-4 w-full h-9 rounded-lg border border-white/10 hover:bg-white/5 hover:border-foreground/30 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
-          >
-            Abrir editor <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <>
+            <button onClick={onOpen} className="min-w-0 flex-1 text-left" title={project.name}>
+              <span className="block truncate text-sm font-medium">{project.name}</span>
+              <span className="block text-[11px] text-muted-foreground">
+                Editado {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}
+              </span>
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Ações de ${project.name}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onSelect={() => setEditing(true)}>
+                  <Pencil className="h-4 w-4" /> Renomear
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onDuplicate}>
+                  <Copy className="h-4 w-4" /> Duplicar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
       </div>
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir “{project.name}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O projeto e todas as suas páginas serão apagados. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete}>Excluir projeto</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
-  );
-}
-
-function NewProjectCard({ onCreate, busy }: { onCreate: () => void; busy: boolean }) {
-  return (
-    <button
-      onClick={onCreate}
-      disabled={busy}
-      className="group min-h-[260px] rounded-2xl border border-dashed border-white/20 hover:border-foreground/45 hover:bg-white/[0.035] p-5 flex flex-col items-start justify-between text-left transition-all disabled:opacity-60"
-    >
-      <span className="w-10 h-10 rounded-xl border border-white/15 group-hover:bg-foreground group-hover:text-background group-hover:border-foreground flex items-center justify-center transition-colors">
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-      </span>
-      <span>
-        <span className="block text-sm font-medium text-foreground">Novo projeto</span>
-        <span className="block mt-1 text-xs leading-relaxed text-muted-foreground">Comece com uma estrutura pronta e personalize cada seção.</span>
-      </span>
-    </button>
   );
 }
 
@@ -363,7 +382,7 @@ function IconBtn({
       type="button"
       onClick={onClick}
       title={title}
-      className="w-6 h-6 rounded-md hover:bg-white/10 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
     >
       {children}
     </button>
