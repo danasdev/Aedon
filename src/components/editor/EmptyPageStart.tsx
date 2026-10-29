@@ -1,37 +1,62 @@
 import { getVariant } from "@/lib/editor/sections";
 import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
-import { VariantPreview } from "./SectionLibrary";
+import { Plus } from "lucide-react";
+import { VariantPreview } from "./VariantPreview";
 
 /** Shown instead of the page frame while a page has no sections: pick a starting point. */
-export function EmptyPageStart({ onPick }: { onPick: (preset: PagePreset) => void }) {
+export function EmptyPageStart({
+  onPick,
+  onAddSection,
+}: {
+  onPick: (preset: PagePreset) => void;
+  onAddSection: () => void;
+}) {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center px-2 py-10 text-center">
-      <h2 className="text-xl font-semibold tracking-tight">Por onde quer começar?</h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Escolha uma página pronta e edite tudo depois, ou adicione blocos avulsos pela lista à esquerda.
+    <div className="mx-auto flex max-w-3xl flex-col items-start px-2 pb-10 pt-8">
+      <p className="ae-eyebrow">// página vazia</p>
+      <h2 className="ae-display mt-3 text-[34px]">Por onde quer começar?</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Escolha uma página pronta e edite tudo depois, ou monte bloco por bloco.
       </p>
-      <div className="mt-8 grid w-full grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-8 grid w-full grid-cols-2 gap-4 sm:grid-cols-3">
         {PAGE_PRESETS.map((preset) => (
-          <button
+          // Not a <button>: the thumbnail renders the site's own buttons inside.
+          <div
             key={preset.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onPick(preset)}
-            className="group overflow-hidden rounded-xl border border-border bg-card text-left transition-colors hover:border-foreground/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(preset);
+              }
+            }}
+            className="group cursor-pointer text-left outline-none"
           >
-            <div className="h-28 overflow-hidden bg-white">
-              {preset.sectionIds.slice(0, 3).map((id) => (
-                <div key={id} className="h-[37px] overflow-hidden border-b border-black/10">
-                  <VariantPreview variantId={id} defaults={getVariant(id)?.defaults ?? {}} scale={0.16} height={37} />
-                </div>
-              ))}
+            <div className="ae-tile overflow-hidden p-2 group-hover:-translate-y-0.5 group-focus-visible:border-ion">
+              <div className="overflow-hidden rounded-[7px]">
+                {preset.sectionIds.slice(0, 3).map((id) => (
+                  <VariantPreview
+                    key={id}
+                    variantId={id}
+                    defaults={getVariant(id)?.defaults ?? {}}
+
+                    height={42}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="px-3 py-2.5">
-              <p className="text-sm font-medium">{preset.name}</p>
-              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{preset.description}</p>
-            </div>
-          </button>
+            <p className="mt-2 text-sm font-semibold">{preset.name}</p>
+            <p className="line-clamp-1 font-mono text-[10.5px] text-faint">
+              {preset.sectionIds.length} blocos · {preset.description.toLowerCase()}
+            </p>
+          </div>
         ))}
       </div>
+      <button type="button" onClick={onAddSection} className="ae-btn mt-8">
+        <Plus className="h-4 w-4" /> Montar bloco por bloco
+      </button>
     </div>
   );
 }

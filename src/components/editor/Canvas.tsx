@@ -1,34 +1,50 @@
-import { useEffect, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type { Device, PropMap, SectionInstance, Typography } from "@/lib/editor/types";
 import { typographyVars } from "@/lib/editor/typography";
 import { sectionAnchorId } from "@/lib/editor/links";
 import { entryAnimation, scrollEffect, sectionBackground } from "@/lib/editor/effects";
-import { elementLayout, parseElementLayout, type EditableElement, type ElementLayout } from "@/lib/editor/layout";
+import {
+  elementLayout,
+  elementLayoutCss,
+  parseElementLayout,
+  type EditableElement,
+  type ElementLayout,
+} from "@/lib/editor/layout";
+import { getVariant } from "@/lib/editor/sections";
 import { LinkProvider, type LinkResolver } from "./blocks/_link";
 import { CustomElements } from "./blocks/CustomElements";
 import { DeviceFrame } from "./DeviceFrame";
 import { ElementSelection } from "./ElementSelection";
-import { getVariant } from "@/lib/editor/sections";
-import { SectionBar, type NewElement } from "./SectionBar";
+import { Minus, Plus } from "lucide-react";
 
 interface Props {
   device: Device;
   sections: SectionInstance[];
   selectedId: string | null;
-  onSelect: (id: string, focus?: "section" | "element") => void;
-  onDuplicate: (id: string) => void;
-  onRemove: (id: string) => void;
-  onMove: (id: string, direction: -1 | 1) => void;
+  onSelect: (id: string | null) => void;
   selectedElement: EditableElement | null;
-  onElementSelect: (element: EditableElement | null) => void;
-  onElementLayoutChange: (sectionId: string, selector: string, patch: Partial<ElementLayout>) => void;
+  onElementSelect: (sectionId: string, element: EditableElement | null) => void;
+  onElementLayoutChange: (
+    sectionId: string,
+    selector: string,
+    patch: Partial<ElementLayout>,
+  ) => void;
   onInteractionStart: () => void;
   onInteractionEnd: (changed: boolean) => void;
-  onResetLayout: (sectionId: string) => void;
-  onAddElement: (sectionId: string, type: NewElement) => void;
   onInlineTextChange: (sectionId: string, previous: string, next: string) => void;
-  onImageChange: (sectionId: string, previous: string, next: string) => void;
-  onSectionPropChange: (sectionId: string, key: string, value: string | boolean) => void;
+  /** Opens the add panel targeting this position in the page. */
+  onInsertAt: (index: number) => void;
+  /** Index the next added section will go to (highlighted), if any. */
+  insertIndex: number | null;
+  /** Bumped by the toolbar's "Editar texto" to start inline editing on the selected element. */
+  editRequest: number;
   renderers: Record<string, ComponentType<{ props: PropMap }>>;
   typography: Typography;
   previewMode: boolean;
@@ -37,6 +53,8 @@ interface Props {
   dropIndex: number | null;
   /** True while a library component is being dragged (disables iframe interaction). */
   dragging: boolean;
+  /** Contextual toolbar, pinned to the top of the canvas (outside the page). */
+  toolbar?: ReactNode;
   /** Rendered in place of the page frame when the page has no visible sections. */
   emptyState?: ReactNode;
 }
@@ -45,7 +63,7 @@ interface Props {
 const EDITABLE_SELECTOR = "div, h1, h2, h3, p, a, button, img, blockquote, figcaption, li, details";
 /** What a click may select: real content only. Wrappers fall through to the section. */
 const TEXT_SELECTOR = "h1, h2, h3, h4, p, a, button, blockquote, figcaption, li, summary";
-const INLINE_TEXT_SELECTOR = "h1, h2, h3, p, a, blockquote, figcaption, li, summary";
+const INLINE_TEXT_SELECTOR = "h1, h2, h3, h4, p, a, button, blockquote, figcaption, li, summary";
 
 function elementSelector(element: HTMLElement, root: HTMLElement) {
   const parts: string[] = [];
@@ -54,7 +72,9 @@ function elementSelector(element: HTMLElement, root: HTMLElement) {
     const parent: HTMLElement | null = current.parentElement;
     if (!parent) return null;
     const tag = current.tagName.toLowerCase();
-    const sameTag = Array.from(parent.children).filter((child: Element) => child.tagName.toLowerCase() === tag);
+    const sameTag = Array.from(parent.children).filter(
+      (child: Element) => child.tagName.toLowerCase() === tag,
+    );
     parts.unshift(`${tag}:nth-of-type(${sameTag.indexOf(current) + 1})`);
     current = parent;
   }
@@ -62,16 +82,29 @@ function elementSelector(element: HTMLElement, root: HTMLElement) {
 }
 
 function hasOwnText(element: HTMLElement) {
-  return Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+  return Array.from(element.childNodes).some(
+    (node) => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim(),
+  );
 }
 
-function elementLabel(element: HTMLElement) {
-  if (element.tagName === "IMG" || Array.from(element.children).some((child) => child.tagName === "IMG")) return "Imagem";
+function elementKind(element: HTMLElement): EditableElement["kind"] {
+  if (
+    element.tagName === "IMG" ||
+    Array.from(element.children).some((child) => child.tagName === "IMG")
+  )
+    return "image";
   const tag = element.tagName.toLowerCase();
-  if (tag === "a" || tag === "button") return "Botão";
-  if (/^h[1-4]$/.test(tag)) return "Título";
-  return "Texto";
+  if (tag === "a" || tag === "button") return "button";
+  if (/^h[1-4]$/.test(tag)) return "title";
+  return "text";
 }
+
+const KIND_LABEL: Record<EditableElement["kind"], string> = {
+  title: "Título",
+  text: "Texto",
+  button: "Botão",
+  image: "Imagem",
+};
 
 function editableTarget(clicked: HTMLElement, root: HTMLElement) {
   const image = clicked.closest("img");
@@ -90,13 +123,12 @@ function SectionLayout({
   background,
   canCanvasEdit,
   selected,
+  editRequest,
   onSelect,
   onLayoutChange,
   onInteractionStart,
   onInteractionEnd,
   onInlineTextChange,
-  onImageChange,
-  onPropChange,
   children,
 }: {
   props: PropMap;
@@ -104,46 +136,51 @@ function SectionLayout({
   background: string;
   canCanvasEdit: boolean;
   selected: EditableElement | null;
+  editRequest: number;
   onSelect: (element: EditableElement | null) => void;
   onLayoutChange: (selector: string, patch: Partial<ElementLayout>) => void;
   onInteractionStart: () => void;
   onInteractionEnd: (changed: boolean) => void;
   onInlineTextChange: (previous: string, next: string) => void;
-  onImageChange: (previous: string, next: string) => void;
-  onPropChange: (key: string, value: string | boolean) => void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ pointerId: number; selector: string; startX: number; startY: number; x: number; y: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    selector: string;
+    startX: number;
+    startY: number;
+    x: number;
+    y: number;
+    moved: boolean;
+  } | null>(null);
   const suppressClickRef = useRef(false);
 
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
     const layout = parseElementLayout(props.elementLayout);
-    const originals = new Map<HTMLElement, { translate: string; width: string; height: string; scale: string; color: string; position: string; cursor: string; userSelect: string }>();
+    const originals = new Map<HTMLElement, string>();
     root.querySelectorAll<HTMLElement>(EDITABLE_SELECTOR).forEach((element) => {
       if (element.closest("[data-editor-control]")) return;
       const selector = elementSelector(element, root);
       if (!selector) return;
+      originals.set(element, element.getAttribute("style") ?? "");
       const style = layout[selector];
-      originals.set(element, { translate: element.style.translate, width: element.style.width, height: element.style.height, scale: element.style.scale, color: element.style.color, position: element.style.position, cursor: element.style.cursor, userSelect: element.style.userSelect });
       if (style) {
-        if (style.x || style.y) {
-          element.style.position = "relative";
-          element.style.translate = `${style.x}px ${style.y}px`;
-        }
-        if (style.width !== 100) element.style.width = `${style.width}%`;
-        if (style.height) element.style.height = `${style.height}px`;
-        if (style.scale !== 100) element.style.scale = `${style.scale / 100}`;
-        if (style.color) element.style.color = style.color;
+        for (const [key, value] of Object.entries(elementLayoutCss(style)))
+          element.style.setProperty(key, value);
       }
       if (canCanvasEdit) {
         element.style.cursor = selected?.selector === selector ? "grab" : "pointer";
         if (!element.isContentEditable) element.style.userSelect = "none";
       }
     });
-    return () => originals.forEach((style, element) => Object.assign(element.style, style));
+    return () =>
+      originals.forEach((style, element) => {
+        if (style) element.setAttribute("style", style);
+        else element.removeAttribute("style");
+      });
   }, [props.elementLayout, canCanvasEdit, selected?.selector]);
 
   const startInlineEdit = (target: HTMLElement) => {
@@ -152,7 +189,7 @@ function SectionLayout({
     target.contentEditable = "true";
     target.style.userSelect = "text";
     target.spellcheck = true;
-    target.style.outline = "2px solid rgba(255,255,255,.85)";
+    target.style.outline = "2px solid #3ccfe0";
     target.style.outlineOffset = "4px";
     target.focus();
     const range = target.ownerDocument.createRange();
@@ -160,6 +197,12 @@ function SectionLayout({
     const selection = target.ownerDocument.defaultView?.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
+    target.onkeydown = (event) => {
+      if (event.key === "Escape" || (event.key === "Enter" && !event.shiftKey)) {
+        event.preventDefault();
+        target.blur();
+      }
+    };
     target.onblur = () => {
       const next = target.textContent?.trim() ?? "";
       target.contentEditable = "false";
@@ -167,13 +210,27 @@ function SectionLayout({
       target.style.outline = "";
       target.style.outlineOffset = "";
       target.onblur = null;
+      target.onkeydown = null;
       if (next && next !== previous) onInlineTextChange(previous, next);
     };
   };
 
+  // The toolbar's "Editar texto" asks for inline editing of the current selection.
+  const lastRequest = useRef(editRequest);
+  useEffect(() => {
+    if (editRequest === lastRequest.current) return;
+    lastRequest.current = editRequest;
+    if (!selected) return;
+    const target = ref.current?.querySelector<HTMLElement>(selected.selector);
+    if (target) startInlineEdit(target);
+    // startInlineEdit only reads refs and the latest callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequest, selected]);
+
   return (
     <div
       ref={ref}
+      data-section-root
       onPointerDownCapture={(event) => {
         if (!canCanvasEdit || event.button !== 0 || event.detail > 1) return;
         if ((event.target as HTMLElement).closest("[data-editor-control]")) return;
@@ -185,7 +242,15 @@ function SectionLayout({
         const selector = elementSelector(target, root);
         if (!selector || selected?.selector !== selector) return;
         const layout = elementLayout(parseElementLayout(props.elementLayout), selector);
-        dragRef.current = { pointerId: event.pointerId, selector, startX: event.clientX, startY: event.clientY, x: layout.x, y: layout.y, moved: false };
+        dragRef.current = {
+          pointerId: event.pointerId,
+          selector,
+          startX: event.clientX,
+          startY: event.clientY,
+          x: layout.x,
+          y: layout.y,
+          moved: false,
+        };
         onInteractionStart();
       }}
       onPointerMoveCapture={(event) => {
@@ -197,7 +262,8 @@ function SectionLayout({
         if (!drag.moved) event.currentTarget.setPointerCapture(event.pointerId);
         drag.moved = true;
         event.preventDefault();
-        const canvasScale = event.currentTarget.getBoundingClientRect().width / event.currentTarget.offsetWidth || 1;
+        const canvasScale =
+          event.currentTarget.getBoundingClientRect().width / event.currentTarget.offsetWidth || 1;
         onLayoutChange(drag.selector, {
           x: Math.max(-360, Math.min(360, drag.x + Math.round(dx / canvasScale))),
           y: Math.max(-360, Math.min(360, drag.y + Math.round(dy / canvasScale))),
@@ -206,10 +272,14 @@ function SectionLayout({
       onPointerUpCapture={(event) => {
         if (dragRef.current?.pointerId === event.pointerId) {
           suppressClickRef.current = dragRef.current.moved;
-          if (dragRef.current.moved) window.setTimeout(() => { suppressClickRef.current = false; }, 0);
+          if (dragRef.current.moved)
+            window.setTimeout(() => {
+              suppressClickRef.current = false;
+            }, 0);
           onInteractionEnd(dragRef.current.moved);
           dragRef.current = null;
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+          if (event.currentTarget.hasPointerCapture(event.pointerId))
+            event.currentTarget.releasePointerCapture(event.pointerId);
         }
       }}
       onPointerCancelCapture={() => {
@@ -225,23 +295,20 @@ function SectionLayout({
           return;
         }
         const clicked = event.target as HTMLElement;
-        // Floating editor controls live inside this section. Let their own handlers
-        // receive clicks instead of selecting the button/input as page content.
         if (clicked.closest("[data-editor-control]")) return;
+        if (clicked.isContentEditable) return;
         const root = ref.current;
         const target = root ? editableTarget(clicked, root) : null;
+        event.preventDefault();
+        event.stopPropagation();
         // Anything that is not real content (wrappers, empty space) selects the section.
-        if (!target || target === root || !root?.contains(target)) {
-          event.preventDefault();
-          event.stopPropagation();
+        const selector = target && root && target !== root ? elementSelector(target, root) : null;
+        if (!target || !selector) {
           onSelect(null);
           return;
         }
-        if (clicked.isContentEditable) return;
-        event.preventDefault();
-        event.stopPropagation();
-        const selector = elementSelector(target, root);
-        if (selector) onSelect({ selector, label: elementLabel(target) });
+        const kind = elementKind(target);
+        onSelect({ selector, kind, label: KIND_LABEL[kind] });
       }}
       onDoubleClickCapture={(event) => {
         if (!canCanvasEdit) return;
@@ -266,16 +333,6 @@ function SectionLayout({
           onLayoutChange={(patch) => onLayoutChange(selected.selector, patch)}
           onInteractionStart={onInteractionStart}
           onInteractionEnd={onInteractionEnd}
-          onReset={() => {
-            const layout = parseElementLayout(props.elementLayout);
-            delete layout[selected.selector];
-            onPropChange("elementLayout", JSON.stringify(layout));
-          }}
-          onEditText={() => {
-            const target = ref.current?.querySelector<HTMLElement>(selected.selector);
-            if (target) startInlineEdit(target);
-          }}
-          onImageChange={onImageChange}
         />
       )}
     </div>
@@ -283,11 +340,45 @@ function SectionLayout({
 }
 
 const WIDTHS: Record<Device, number> = { desktop: 1280, tablet: 820, mobile: 390 };
-const FRAME_PADDING = 24; // px, on every side of the scaled frame
+const FRAME_PADDING = 32; // px around the scaled frame
+const TOOLBAR_SPACE = 72; // px above the frame reserved for the contextual toolbar
 
 function DropIndicator() {
+  return <div className="my-1.5 h-1 rounded-full bg-[#3ccfe0] animate-pulse" />;
+}
+
+/** Hover target between two sections: "+ Adicionar seção" inserts exactly there. */
+function InsertGap({
+  index,
+  active,
+  onInsert,
+}: {
+  index: number;
+  active: boolean;
+  onInsert: (index: number) => void;
+}) {
   return (
-    <div className="my-1.5 h-1 rounded-full bg-foreground animate-pulse" />
+    <div data-editor-control className="group/gap relative z-30 h-0">
+      <div className="absolute inset-x-0 -top-3 h-6" />
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[#3ccfe0] transition-opacity ${
+          active ? "opacity-100" : "opacity-0 group-hover/gap:opacity-100"
+        }`}
+      />
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onInsert(index);
+        }}
+        className={`absolute left-1/2 top-0 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-[#3ccfe0] px-4 text-[13px] font-bold text-[#0a0a0a] shadow-[0_3px_0_#1a8a99] transition-opacity ${
+          active ? "opacity-100" : "opacity-0 group-hover/gap:opacity-100 focus-visible:opacity-100"
+        }`}
+        style={{ fontFamily: "Inter, sans-serif" }}
+      >
+        <Plus className="h-3.5 w-3.5" strokeWidth={2.6} /> Adicionar seção
+      </button>
+    </div>
   );
 }
 
@@ -313,8 +404,10 @@ function SectionMotion({ props, children }: { props: PropMap; children: ReactNod
       const viewportTop = rootRect?.top ?? 0;
       const viewportHeight = scrollRoot?.clientHeight ?? win.innerHeight;
       const top = (frameRect?.top ?? 0) + sectionRect.top;
-      const centerDelta = (viewportTop + viewportHeight / 2 - (top + sectionRect.height / 2)) / viewportHeight;
-      const inView = top + sectionRect.height > viewportTop + 40 && top < viewportTop + viewportHeight - 40;
+      const centerDelta =
+        (viewportTop + viewportHeight / 2 - (top + sectionRect.height / 2)) / viewportHeight;
+      const inView =
+        top + sectionRect.height > viewportTop + 40 && top < viewportTop + viewportHeight - 40;
       setVisible((wasVisible) => wasVisible || inView);
       setOffset(Math.max(-1, Math.min(1, centerDelta)));
     };
@@ -339,8 +432,10 @@ function SectionMotion({ props, children }: { props: PropMap; children: ReactNod
           ? "scale(0.96)"
           : "none"
     : "none";
-  const parallaxTransform = effect === "parallax" ? `translateY(${Math.round(offset * 22)}px)` : "none";
-  const opacity = !visible && animation !== "none" ? 0 : effect === "fade" ? 1 - Math.abs(offset) * 0.25 : 1;
+  const parallaxTransform =
+    effect === "parallax" ? `translateY(${Math.round(offset * 22)}px)` : "none";
+  const opacity =
+    !visible && animation !== "none" ? 0 : effect === "fade" ? 1 - Math.abs(offset) * 0.25 : 1;
 
   return (
     <div
@@ -348,7 +443,8 @@ function SectionMotion({ props, children }: { props: PropMap; children: ReactNod
       style={{
         opacity,
         transform: `${entryTransform} ${parallaxTransform}`,
-        transition: "opacity 650ms cubic-bezier(.2,.8,.2,1), transform 650ms cubic-bezier(.2,.8,.2,1)",
+        transition:
+          "opacity 650ms cubic-bezier(.2,.8,.2,1), transform 650ms cubic-bezier(.2,.8,.2,1)",
         willChange: animation !== "none" || effect !== "none" ? "transform, opacity" : undefined,
       }}
     >
@@ -362,47 +458,39 @@ export function Canvas({
   sections,
   selectedId,
   onSelect,
-  onDuplicate,
-  onRemove,
-  onMove,
   selectedElement,
   onElementSelect,
   onElementLayoutChange,
   onInteractionStart,
   onInteractionEnd,
-  onResetLayout,
-  onAddElement,
   onInlineTextChange,
-  onImageChange,
-  onSectionPropChange,
+  onInsertAt,
+  insertIndex,
+  editRequest,
   renderers,
   typography,
   previewMode,
   resolveLink,
   dropIndex,
   dragging,
+  toolbar,
   emptyState,
 }: Props) {
   const width = WIDTHS[device];
   const visible = sections.filter((s) => !s.hidden && renderers[s.variantId]);
-  const activeIndex = visible.findIndex((s) => s.id === selectedId);
 
   const mainRef = useRef<HTMLElement>(null);
   const [availableWidth, setAvailableWidth] = useState(width);
   const [frameHeight, setFrameHeight] = useState(600);
   const [zoom, setZoom] = useState<"fit" | number>("fit");
 
-  // Track how much horizontal room the canvas viewport actually has, so the frame can
-  // be scaled to fit instead of overflowing — a fixed-width frame wider than the
-  // container gets clipped unreachably on typical laptop screens (justify-content:
-  // center pushes half the overflow off-screen to the left, past scrollLeft: 0).
+  // Track the horizontal room the canvas actually has so the frame scales to fit
+  // instead of overflowing (centering would push half the overflow off-screen).
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
     const measure = () => setAvailableWidth(Math.max(0, el.clientWidth - FRAME_PADDING * 2));
-    // The sidebars' open/closed state (EditorShell's isNarrow check) settles via its own
-    // effect after mount, so `main`'s real width isn't final on the very first paint —
-    // re-measure a few times to catch that settle instead of freezing on a transient value.
+    // Side panels settle after mount, so re-measure a few times before trusting the width.
     measure();
     const t1 = window.requestAnimationFrame(measure);
     const t2 = window.setTimeout(measure, 150);
@@ -436,132 +524,180 @@ export function Canvas({
     minHeight: 600,
   };
 
+  const editing = !previewMode;
+
   const content = (
     <LinkProvider value={resolveLink}>
-      <div style={siteStyle}>
-        {visible.length === 0 && (
-          <div
-            className={`m-6 rounded-2xl border-2 border-dashed p-20 text-center text-sm transition-colors ${
-              dragging && dropIndex === 0
-                ? "border-foreground text-white/70 bg-foreground/5"
-                : "border-white/10 text-white/40"
-            }`}
-          >
-            Sua página está vazia. Escolha um preset completo ou adicione um bloco pela biblioteca.
-          </div>
-        )}
+      <div style={siteStyle} onClick={editing ? () => onSelect(null) : undefined}>
         {visible.map((s, i) => {
           const R = renderers[s.variantId]!;
-          const active = !previewMode && s.id === selectedId;
+          const active = editing && s.id === selectedId;
+          const name = getVariant(s.variantId)?.name ?? "Seção";
           return (
             <div key={s.id}>
               {dragging && dropIndex === i && <DropIndicator />}
+              {editing && !dragging && i > 0 && (
+                <InsertGap
+                  index={sections.indexOf(s)}
+                  active={insertIndex === sections.indexOf(s)}
+                  onInsert={onInsertAt}
+                />
+              )}
               <div
                 id={sectionAnchorId(s.id)}
                 onClick={
-                  previewMode
-                    ? undefined
-                    : (e) => {
+                  editing
+                    ? (e) => {
                         e.stopPropagation();
                         onSelect(s.id);
                       }
+                    : undefined
                 }
-                className={`relative transition-all ${!previewMode ? "editor-canvas-section" : ""} ${
-                  previewMode
-                    ? ""
-                    : `cursor-pointer ${
-                        active
-                          ? "ring-2 ring-foreground ring-inset"
-                          : "hover:ring-1 hover:ring-white/20 hover:ring-inset"
-                      }`
-                }`}
+                className={`group/section relative ${editing ? "editor-canvas-section cursor-pointer" : ""}`}
               >
                 <SectionMotion props={s.props}>
                   <SectionLayout
                     props={s.props}
                     background={sectionBackground(s.props)}
-                    canCanvasEdit={!previewMode}
+                    canCanvasEdit={editing}
                     selected={active ? selectedElement : null}
-                    onSelect={(element) => {
-                      onSelect(s.id, element ? "element" : "section");
-                      onElementSelect(element);
-                    }}
-                    onLayoutChange={(selector, patch) => onElementLayoutChange(s.id, selector, patch)}
+                    editRequest={editRequest}
+                    onSelect={(element) => onElementSelect(s.id, element)}
+                    onLayoutChange={(selector, patch) =>
+                      onElementLayoutChange(s.id, selector, patch)
+                    }
                     onInteractionStart={onInteractionStart}
                     onInteractionEnd={onInteractionEnd}
-                    onInlineTextChange={(previous, next) => onInlineTextChange(s.id, previous, next)}
-                    onImageChange={(previous, next) => onImageChange(s.id, previous, next)}
-                    onPropChange={(key, value) => onSectionPropChange(s.id, key, value)}
+                    onInlineTextChange={(previous, next) =>
+                      onInlineTextChange(s.id, previous, next)
+                    }
                   >
-                    {/* The surface above owns the fill. Keeping children transparent means
-                        a newly added module extends the same background naturally. */}
+                    {/* The surface above owns the fill; children stay transparent so an
+                        added module extends the same background. */}
                     <R props={{ ...s.props, bg: "transparent" }} />
                     <CustomElements props={s.props} />
                   </SectionLayout>
                 </SectionMotion>
+                {editing && (
+                  <div
+                    data-editor-control
+                    className={`pointer-events-none absolute inset-0 z-20 transition-shadow ${
+                      active && !selectedElement
+                        ? "shadow-[inset_0_0_0_2px_#3ccfe0]"
+                        : active
+                          ? "shadow-[inset_0_0_0_1px_rgba(60,207,224,0.45)]"
+                          : "group-hover/section:shadow-[inset_0_0_0_1px_rgba(60,207,224,0.4)]"
+                    }`}
+                  >
+                    {active && !selectedElement && (
+                      <span
+                        className="absolute left-2 top-2 rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-[11px] font-bold leading-none text-[#0a0a0a]"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        seção · {name.toLowerCase()}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
         {dragging && dropIndex === visible.length && visible.length > 0 && <DropIndicator />}
+        {editing && !dragging && visible.length > 0 && (
+          <div className="relative h-14">
+            <InsertGap
+              index={sections.length}
+              active={insertIndex === sections.length}
+              onInsert={onInsertAt}
+            />
+          </div>
+        )}
       </div>
     </LinkProvider>
   );
 
+  const showEmpty = editing && !!emptyState && visible.length === 0 && !dragging;
+
   return (
-    <main
-      ref={mainRef}
-      className="flex-1 min-w-0 overflow-auto scrollbar-thin bg-[#050505]"
-      style={{ padding: FRAME_PADDING }}
-    >
-      <div className="mx-auto mb-4 flex max-w-4xl items-center justify-end gap-3">
-        <div role="group" aria-label="Zoom do canvas" className="flex items-center rounded-lg border border-white/15 bg-white/[0.04] p-1 text-xs text-white/80">
-          <button type="button" onClick={() => changeZoom(-0.1)} aria-label="Diminuir zoom" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/10">−</button>
-          <span className="min-w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
-          <button type="button" onClick={() => changeZoom(0.1)} aria-label="Aumentar zoom" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/10">+</button>
-          <button type="button" onClick={() => setZoom("fit")} aria-pressed={zoom === "fit"} className={`ml-1 min-h-8 rounded-md px-2 ${zoom === "fit" ? "bg-white/15 text-white" : "hover:bg-white/10"}`}>Ajustar</button>
-        </div>
-      </div>
-      {!previewMode && emptyState && sections.length === 0 && !dragging ? emptyState : (
-      <div className={`min-h-full flex items-start ${width * scale > availableWidth ? "justify-start" : "justify-center"}`}>
-        {/* Reserves the true scaled-down footprint so centering never overflows the
-            viewport — the frame inside renders at full device width and is scaled
-            visually with a CSS transform, keeping breakpoints accurate. */}
-        <div className="shrink-0" style={{ width: width * scale, height: frameHeight * scale }}>
+    <div className="relative min-w-0 flex-1 bg-[radial-gradient(120%_80%_at_50%_0%,var(--panel),var(--void))]">
+      <main
+        ref={mainRef}
+        className="absolute inset-0 overflow-auto scrollbar-thin"
+        style={{
+          padding: `${editing ? TOOLBAR_SPACE : FRAME_PADDING}px ${FRAME_PADDING}px ${FRAME_PADDING}px`,
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget && editing) onSelect(null);
+        }}
+      >
+        {showEmpty ? (
+          emptyState
+        ) : (
           <div
-            className="transition-transform duration-200 ease-out origin-top-left"
-            style={{
-              width,
-              transform: `scale(${scale})`,
-              boxShadow: "0 30px 80px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)",
-              borderRadius: device === "desktop" ? 16 : 24,
-              overflow: "hidden",
-              background: "#000",
-            }}
+            className={`flex min-h-full items-start ${width * scale > availableWidth ? "justify-start" : "justify-center"}`}
           >
-            <DeviceFrame width={width} interactive={!dragging} onHeightChange={setFrameHeight}>
-              {content}
-            </DeviceFrame>
+            {/* Reserves the scaled footprint so centering never overflows; the frame renders
+                at full device width and is scaled visually, keeping breakpoints accurate. */}
+            <div className="shrink-0" style={{ width: width * scale, height: frameHeight * scale }}>
+              <div
+                className="origin-top-left transition-transform duration-200 ease-out"
+                style={{
+                  width,
+                  transform: `scale(${scale})`,
+                  boxShadow: "0 0 0 1px var(--hairline), 0 30px 80px -24px rgba(0,0,0,0.9)",
+                  borderRadius: device === "desktop" ? 12 : 24,
+                  overflow: "hidden",
+                  background: "#000",
+                }}
+              >
+                <DeviceFrame width={width} interactive={!dragging} onHeightChange={setFrameHeight}>
+                  {content}
+                </DeviceFrame>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      )}
-      {!previewMode && activeIndex >= 0 && (
-        <div className="pointer-events-none sticky bottom-4 z-30 h-0">
-          <div className="absolute inset-x-0 bottom-0 flex justify-center">
-            <SectionBar
-              key={visible[activeIndex].id}
-              name={getVariant(visible[activeIndex].variantId)?.name ?? "Seção"}
-              canMoveUp={activeIndex > 0}
-              canMoveDown={activeIndex < visible.length - 1}
-              onMove={(dir) => onMove(visible[activeIndex].id, dir)}
-              onDuplicate={() => onDuplicate(visible[activeIndex].id)}
-              onRemove={() => onRemove(visible[activeIndex].id)}
-              onAddElement={(type) => onAddElement(visible[activeIndex].id, type)}
-            />
-          </div>
+        )}
+      </main>
+
+      {editing && toolbar && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
+          <div className="pointer-events-auto max-w-full">{toolbar}</div>
         </div>
       )}
-    </main>
+
+      {!showEmpty && (
+        <div
+          role="group"
+          aria-label="Zoom do canvas"
+          className="absolute bottom-4 right-4 z-30 flex h-9 items-center gap-0.5 rounded-full border border-border bg-surface px-1 font-mono text-[11px] text-muted-foreground"
+        >
+          <button
+            type="button"
+            onClick={() => changeZoom(-0.1)}
+            aria-label="Diminuir zoom"
+            className="ae-ib h-7 w-7 rounded-full"
+          >
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom("fit")}
+            title="Ajustar à tela"
+            className={`min-w-12 rounded-full px-1 tabular-nums ${zoom === "fit" ? "text-foreground" : "hover:text-foreground"}`}
+          >
+            {Math.round(scale * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={() => changeZoom(0.1)}
+            aria-label="Aumentar zoom"
+            className="ae-ib h-7 w-7 rounded-full"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

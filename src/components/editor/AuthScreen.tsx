@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { signInWithPassword, signUpWithPassword } from "@/lib/supabase/auth";
 import { Loader2 } from "lucide-react";
-import { AedonMark } from "./AedonMark";
+import { AedonLogo } from "./AedonMark";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -35,12 +35,15 @@ export function AuthScreen() {
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-background text-foreground px-4">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center text-center mb-8">
-          <AedonMark className="w-7 h-7 text-foreground mb-4" />
-          <div className="text-lg font-medium font-display tracking-[0.2em]">AEDON</div>
-          <div className="text-sm text-muted-foreground mt-2">
-            {mode === "login" ? "Entre para acessar seus sites" : "Crie sua conta"}
-          </div>
+        <div className="mb-8 flex flex-col items-start">
+          <AedonLogo />
+          <p className="ae-eyebrow mt-8">{mode === "login" ? "// entrar" : "// nova conta"}</p>
+          <h1 className="ae-display mt-2 text-3xl">
+            {mode === "login" ? "Seus sites" : "Crie sua conta"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {mode === "login" ? "Entre para continuar de onde parou." : "Leva menos de um minuto."}
+          </p>
         </div>
 
         <form onSubmit={submit} className="space-y-3">
@@ -50,8 +53,9 @@ export function AuthScreen() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            aria-label="E-mail"
             placeholder="voce@email.com"
-            className="w-full text-sm bg-input/60 border border-border rounded-lg px-3 py-2.5 outline-none focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10 transition-colors"
+            className="ae-input"
           />
           <input
             type="password"
@@ -60,8 +64,9 @@ export function AuthScreen() {
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-label="Senha"
             placeholder="Senha (mín. 6 caracteres)"
-            className="w-full text-sm bg-input/60 border border-border rounded-lg px-3 py-2.5 outline-none focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10 transition-colors"
+            className="ae-input"
           />
 
           {error && (
@@ -70,7 +75,7 @@ export function AuthScreen() {
             </div>
           )}
           {info && (
-            <div className="text-xs text-foreground/80 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <div className="rounded-lg border border-ion/30 bg-ion/10 px-3 py-2 text-xs text-ion">
               {info}
             </div>
           )}
@@ -78,7 +83,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={busy}
-            className="w-full h-10 rounded-lg text-sm font-medium bg-primary text-primary-foreground flex items-center justify-center gap-2 transition-colors hover:bg-primary/90 disabled:opacity-60"
+            className="ae-btn ae-btn-primary ae-btn-lg mt-2 w-full"
           >
             {busy && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === "login" ? "Entrar" : "Criar conta"}
@@ -86,6 +91,7 @@ export function AuthScreen() {
         </form>
 
         <button
+          type="button"
           onClick={() => {
             setMode((m) => (m === "login" ? "signup" : "login"));
             setError(null);

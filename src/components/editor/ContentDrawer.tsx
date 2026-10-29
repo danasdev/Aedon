@@ -74,11 +74,9 @@ function shortColorLabel(label: string): string {
 }
 
 interface Props {
-  instance: SectionInstance | null;
-  variant: SectionVariant | null;
-  typography: Typography;
+  instance: SectionInstance;
+  variant: SectionVariant;
   linkOptions: LinkOptions;
-  project: ProjectState;
   onChange: (key: string, value: PropValue) => void;
   onApplyColorsToAll: () => void;
   canApplyColorsToAll: boolean;
@@ -87,131 +85,56 @@ interface Props {
   onListChange: (key: string, itemId: string, field: string, value: string) => void;
   onListMove: (key: string, itemId: string, dir: -1 | 1) => void;
   onListReorder: (key: string, fromId: string, toId: string) => void;
-  onTypographyChange: (patch: Partial<Typography>) => void;
-  onToggleBillingAddon: (key: string) => void;
   onUploadImage: (file: File) => Promise<string>;
-  selectedElement: EditableElement | null;
-  onBackToSection: () => void;
+  onClose: () => void;
   overlay?: boolean;
-  onClose?: () => void;
 }
 
-export function PropertiesPanel(props: Props) {
-  const { instance, variant, typography, project, selectedElement, overlay, onClose } = props;
+/** "Editar conteúdo": the selected section's fields in reading order, opened on demand. */
+export function ContentDrawer(props: Props) {
+  const { instance, variant, overlay, onClose } = props;
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
-  }, [instance?.id, selectedElement?.selector]);
-
-  const SectionIcon = variant ? (KIND_ICON[variant.kind] ?? Layers2) : SlidersHorizontal;
-  const title = selectedElement ? selectedElement.label : variant ? variant.name : "Ajustes do site";
-  const subtitle = selectedElement
-    ? `Dentro de ${variant?.name ?? "seção"}`
-    : variant
-      ? variant.description
-      : "Fonte e preços valem para o site todo";
-
-  const asideCls = overlay
-    ? "absolute inset-y-0 right-0 z-30 w-[320px] max-w-[92vw] border-l border-border bg-card shadow-2xl flex flex-col"
-    : "w-[320px] shrink-0 border-l border-border bg-card flex flex-col";
+  }, [instance.id]);
 
   return (
     <>
-      {overlay && <div className="absolute inset-0 z-20 bg-black/50" onClick={onClose} />}
-      <aside className={`${asideCls} editor-panel-in editor-properties`} aria-label="Painel de edição">
-        <div className="shrink-0 border-b border-border px-4 py-3">
-          {selectedElement && (
-            <button
-              type="button"
-              onClick={props.onBackToSection}
-              className="-ml-1 mb-2 flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Voltar para {variant?.name ?? "a seção"}
-            </button>
-          )}
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
-              <SectionIcon className="h-4 w-4 text-muted-foreground" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-sm font-semibold text-foreground">{title}</h2>
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>
-            </div>
-            {overlay && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-white/10 hover:text-foreground"
-                aria-label="Fechar painel"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+      {overlay && <div className="absolute inset-0 z-20 bg-black/60" onClick={onClose} />}
+      <aside
+        aria-label={`Conteúdo · ${variant.name}`}
+        className={`editor-panel-in editor-properties flex w-[340px] max-w-[92vw] shrink-0 flex-col border-l border-border bg-panel ${
+          overlay ? "absolute inset-y-0 right-0 z-30 shadow-2xl" : ""
+        }`}
+      >
+        <div className="flex h-[58px] shrink-0 items-center justify-between gap-3 border-b border-border px-4">
+          <div className="min-w-0">
+            <p className="ae-eyebrow">// conteúdo</p>
+            <h2 className="ae-title mt-0.5 truncate">{variant.name}</h2>
           </div>
+          <button type="button" onClick={onClose} className="ae-ib h-8 w-8" aria-label="Fechar conteúdo">
+            <X className="h-4 w-4" />
+          </button>
         </div>
-
         <div ref={contentRef} className="editor-panel-content flex-1 overflow-y-auto scrollbar-thin">
-          {selectedElement && instance ? (
-            <ElementInspector
-              instance={instance}
-              selectedElement={selectedElement}
-              onChange={props.onChange}
-            />
-          ) : instance && variant ? (
-            <SectionFields
-              instance={instance}
-              variant={variant}
-              linkOptions={props.linkOptions}
-              onChange={props.onChange}
-              onApplyColorsToAll={props.onApplyColorsToAll}
-              canApplyColorsToAll={props.canApplyColorsToAll}
-              onListAdd={props.onListAdd}
-              onListRemove={props.onListRemove}
-              onListChange={props.onListChange}
-              onListMove={props.onListMove}
-              onListReorder={props.onListReorder}
-              onUploadImage={props.onUploadImage}
-            />
-          ) : (
-            <SiteSettings
-              typography={typography}
-              project={project}
-              onTypographyChange={props.onTypographyChange}
-              onToggleBillingAddon={props.onToggleBillingAddon}
-            />
-          )}
+          <SectionFields
+            instance={instance}
+            variant={variant}
+            linkOptions={props.linkOptions}
+            onChange={props.onChange}
+            onApplyColorsToAll={props.onApplyColorsToAll}
+            canApplyColorsToAll={props.canApplyColorsToAll}
+            onListAdd={props.onListAdd}
+            onListRemove={props.onListRemove}
+            onListChange={props.onListChange}
+            onListMove={props.onListMove}
+            onListReorder={props.onListReorder}
+            onUploadImage={props.onUploadImage}
+          />
         </div>
       </aside>
     </>
-  );
-}
-
-/** Shown when nothing is selected: site-wide settings plus a one-line hint. */
-function SiteSettings({
-  typography,
-  project,
-  onTypographyChange,
-  onToggleBillingAddon,
-}: {
-  typography: Typography;
-  project: ProjectState;
-  onTypographyChange: Props["onTypographyChange"];
-  onToggleBillingAddon: Props["onToggleBillingAddon"];
-}) {
-  return (
-    <div className="space-y-3 p-4">
-      <p className="flex items-start gap-2 rounded-lg bg-white/[0.04] p-3 text-xs leading-relaxed text-muted-foreground">
-        <MousePointerClick className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        Clique em uma seção ou em um texto, imagem ou botão do site para editar.
-      </p>
-      <Disclosure title="Fontes e texto" icon={Type} defaultOpen>
-        <TypographyPanel typography={typography} onChange={onTypographyChange} />
-      </Disclosure>
-      <Disclosure title="Preços do projeto" icon={Wallet}>
-        <PricingPanel project={project} onToggleAddon={onToggleBillingAddon} />
-      </Disclosure>
-    </div>
   );
 }
 
@@ -244,93 +167,7 @@ function Disclosure({
   );
 }
 
-/** Element selected on the canvas: color first, exact position tucked away. */
-function ElementInspector({
-  instance,
-  selectedElement,
-  onChange,
-}: {
-  instance: SectionInstance;
-  selectedElement: EditableElement;
-  onChange: (key: string, value: PropValue) => void;
-}) {
-  const map = parseElementLayout(instance.props.elementLayout);
-  const current = elementLayout(map, selectedElement.selector);
-  const patch = (partial: Partial<ElementLayout>) =>
-    onChange(
-      "elementLayout",
-      encodeElementLayout({ ...map, [selectedElement.selector]: { ...current, ...partial } }),
-    );
-  const reset = () => {
-    const next = { ...map };
-    delete next[selectedElement.selector];
-    onChange("elementLayout", encodeElementLayout(next));
-  };
-  const modified = !!map[selectedElement.selector];
-  const input =
-    "mt-1 min-h-10 w-full rounded-lg border border-border bg-input/50 px-3 py-2 text-sm outline-none focus:border-foreground/50";
-
-  return (
-    <div className="space-y-4 p-4">
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        {selectedElement.label === "Imagem"
-          ? "Use “Imagem” na barra sobre o elemento para trocar a foto."
-          : "Dê dois cliques no texto para editar. Arraste para mover e use as alças para mudar o tamanho."}
-      </p>
-
-      {selectedElement.label !== "Imagem" && (
-        <label className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2.5 text-sm">
-          Cor
-          <input
-            aria-label="Cor deste elemento"
-            type="color"
-            value={current.color || "#ffffff"}
-            onChange={(event) => patch({ color: event.target.value })}
-            className="h-9 w-14 cursor-pointer rounded-lg border border-border bg-transparent p-1"
-          />
-        </label>
-      )}
-
-      <Disclosure title="Posição e tamanho">
-        <div className="space-y-3 p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs text-muted-foreground">
-              Mover → (px)
-              <input className={input} type="number" min={-360} max={360} value={current.x} onChange={(e) => patch({ x: Number(e.target.value) })} />
-            </label>
-            <label className="text-xs text-muted-foreground">
-              Mover ↓ (px)
-              <input className={input} type="number" min={-360} max={360} value={current.y} onChange={(e) => patch({ y: Number(e.target.value) })} />
-            </label>
-            <label className="text-xs text-muted-foreground">
-              Largura (%)
-              <input className={input} type="number" min={5} max={100} value={current.width} onChange={(e) => patch({ width: Number(e.target.value) })} />
-            </label>
-            <label className="text-xs text-muted-foreground">
-              Altura (px)
-              <input className={input} type="number" min={0} max={1600} value={current.height} onChange={(e) => patch({ height: Number(e.target.value) })} placeholder="auto" />
-            </label>
-            <label className="col-span-2 text-xs text-muted-foreground">
-              Escala (%)
-              <input className={input} type="number" min={25} max={200} value={current.scale} onChange={(e) => patch({ scale: Number(e.target.value) })} />
-            </label>
-          </div>
-        </div>
-      </Disclosure>
-
-      <button
-        type="button"
-        onClick={reset}
-        disabled={!modified}
-        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-border text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-      >
-        <RotateCcw className="h-3.5 w-3.5" /> Voltar ao original
-      </button>
-    </div>
-  );
-}
-
-/** Extra blocks added from the canvas bar, plus a way to undo manual nudging. */
+/** Extra blocks added from the add panel, plus a way to undo manual nudging. */
 function ExtrasSection({
   instance,
   onChange,
@@ -459,10 +296,7 @@ function SectionFields({
 
   return (
     <div className="p-4 space-y-5">
-      <div className="border-t border-border pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">Conteúdo</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Altere textos, imagens, links e itens desta seção.</p>
-      </div>
+      <p className="ae-label">// textos, imagens e links</p>
 
       <div className="space-y-4">
         {groups.map(({ field: f, children }) => {
@@ -481,10 +315,7 @@ function SectionFields({
         })}
       </div>
 
-      <div className="border-t border-border pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">Aparência</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Cores e efeitos visuais da seção.</p>
-      </div>
+      <p className="ae-label border-t border-border pt-5">// aparência</p>
 
       {colorFields.length > 0 && (
         <div>

@@ -7,7 +7,7 @@ import { decodeLink, resolveHref, sectionAnchorId } from "./links";
 import { LinkProvider, type LinkResolver } from "@/components/editor/blocks/_link";
 import { CustomElements } from "@/components/editor/blocks/CustomElements";
 import { entryAnimation, sectionBackground } from "./effects";
-import { parseElementLayout } from "./layout";
+import { elementLayoutCss, parseElementLayout } from "./layout";
 
 /** Renders a single page of the project to a standalone HTML document. */
 export function exportHTML(project: ProjectState, pageId?: string): string {
@@ -46,7 +46,9 @@ export function exportHTML(project: ProjectState, pageId?: string): string {
     .flatMap((s) =>
       Object.entries(parseElementLayout(s.props.elementLayout)).map(
         ([selector, layout]) =>
-          `#${sectionAnchorId(s.id)} > ${selector} { position: relative; translate: ${layout.x}px ${layout.y}px; width: ${layout.width}%; scale: ${layout.scale / 100}; }`,
+          `#${sectionAnchorId(s.id)} > ${selector} { ${Object.entries(elementLayoutCss(layout))
+            .map(([k, v]) => `${k}: ${v};`)
+            .join(" ")} }`,
       ),
     )
     .join("\n  ");

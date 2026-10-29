@@ -3,7 +3,7 @@
 - Atualizado em: 2026-10-29.
 - Tipo: projeto existente, adotado para registro de fluxo nesta revisão do editor.
 - Fase: implementação local concluída.
-- Atividade: simplificação da interface do editor (topo, seleção, painéis, biblioteca e dashboard).
+- Atividade: reconstrução completa da interface (design no Figma, paleta Entropy + ciano gelo, estilo Kinetics).
 - Responsável nesta etapa: implementação de UI.
 - Estado: validado localmente; sem publicação solicitada.
 - Evidência: código do editor em `src/components/editor/` e tokens em `docs/design-tokens.md`.

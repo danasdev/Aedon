@@ -345,7 +345,9 @@ export function useProject(projectId: string) {
   // --- Page operations -------------------------------------------------------
 
   const addPage = useCallback(
-    (name = "Nova página") => {
+    (requested?: string) => {
+      // Guard against handlers passing a click event straight through.
+      const name = typeof requested === "string" && requested.trim() ? requested : "Nova página";
       const id = uuid();
       commit((p) => {
         const slug = uniqueSlug(
