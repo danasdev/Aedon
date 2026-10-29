@@ -45,6 +45,10 @@ interface Props {
   insertIndex: number | null;
   /** Bumped by the toolbar's "Editar texto" to start inline editing on the selected element. */
   editRequest: number;
+  /** Section to highlight briefly after it was added, moved, duplicated or restored. */
+  flash: { id: string; nonce: number } | null;
+  /** Section playing its exit animation just before it is removed. */
+  leavingId: string | null;
   renderers: Record<string, ComponentType<{ props: PropMap }>>;
   typography: Typography;
   previewMode: boolean;
@@ -327,6 +331,7 @@ function SectionLayout({
       {children}
       {selected && (
         <ElementSelection
+          key={selected.selector}
           root={ref.current}
           element={selected}
           layout={elementLayout(parseElementLayout(props.elementLayout), selected.selector)}
@@ -467,6 +472,8 @@ export function Canvas({
   onInsertAt,
   insertIndex,
   editRequest,
+  flash,
+  leavingId,
   renderers,
   typography,
   previewMode,
@@ -553,7 +560,7 @@ export function Canvas({
                       }
                     : undefined
                 }
-                className={`group/section relative ${editing ? "editor-canvas-section cursor-pointer" : ""}`}
+                className={`group/section relative ${editing ? "editor-canvas-section cursor-pointer" : ""} ${leavingId === s.id ? "ae-leave" : ""}`}
               >
                 <SectionMotion props={s.props}>
                   <SectionLayout
@@ -578,6 +585,13 @@ export function Canvas({
                     <CustomElements props={s.props} />
                   </SectionLayout>
                 </SectionMotion>
+                {editing && flash?.id === s.id && (
+                  <div
+                    key={flash.nonce}
+                    data-editor-control
+                    className="ae-flash pointer-events-none absolute inset-0 z-20"
+                  />
+                )}
                 {editing && (
                   <div
                     data-editor-control

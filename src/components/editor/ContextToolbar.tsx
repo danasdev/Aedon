@@ -27,10 +27,21 @@ import {
   Upload,
 } from "@/components/icons";
 
+export type SectionBackground = {
+  /** Solid colour (also the gradient's start when none was picked yet). */
+  base: string;
+  gradient: boolean;
+  from: string;
+  to: string;
+  direction: string;
+  /** Second colour of a decorative glow, for blocks that have one. */
+  glow?: string;
+};
+
 type SectionActions = {
   name: string;
-  background: string;
-  onBackground: (color: string) => void;
+  background: SectionBackground;
+  onBackgroundChange: (patch: Record<string, string | boolean>) => void;
   onEditContent: () => void;
   contentOpen: boolean;
   canMoveUp: boolean;
@@ -44,8 +55,9 @@ type SectionActions = {
 type ElementActions = {
   element: EditableElement;
   layout: ElementLayout;
-  /** Current colour as rendered (used when the element has no override yet). */
+  /** Current colours as rendered (used when the element has no override yet). */
   renderedColor: string;
+  renderedBg: string;
   imageSrc: string;
   onPatch: (patch: Partial<ElementLayout>) => void;
   onEditText: () => void;
@@ -177,9 +189,7 @@ function SectionTools(s: SectionActions) {
   return (
     <>
       <Tag icon={Square}>{s.name}</Tag>
-      <ColorTool label="Cor de fundo da seção" value={s.background} onChange={s.onBackground}>
-        <PaintBucket className="h-4 w-4 text-muted-foreground" /> Fundo
-      </ColorTool>
+      <BackgroundTool value={s.background} onChange={s.onBackgroundChange} />
       <button
         type="button"
         onClick={s.onEditContent}
@@ -298,6 +308,19 @@ function ElementTools({ sectionName, ...el }: ElementActions & { sectionName: st
           />
         </>
       )}
+      {el.element.kind === "button" && (
+        <>
+          <Sep />
+          <ColorTool
+            label="Cor do botão"
+            value={el.layout.bg || el.renderedBg}
+            onChange={(bg) => el.onPatch({ bg })}
+          >
+            <PaintBucket className="h-4 w-4 text-muted-foreground" />
+          </ColorTool>
+          <CornerTool value={el.layout.radius} onChange={(radius) => el.onPatch({ radius })} />
+        </>
+      )}
       <Sep />
       <Tool label="Voltar ao original" onClick={el.onReset} disabled={!el.modified}>
         <RotateCcw className="h-4 w-4" />
@@ -310,6 +333,216 @@ function ElementTools({ sectionName, ...el }: ElementActions & { sectionName: st
         <CornerLeftUp className="h-4 w-4" />
       </Tool>
     </>
+  );
+}
+
+const DIRECTIONS: { value: string; label: string; rotate: number }[] = [
+  { value: "180deg", label: "De cima para baixo", rotate: 90 },
+  { value: "90deg", label: "Da esquerda para a direita", rotate: 0 },
+  { value: "135deg", label: "Diagonal", rotate: 45 },
+  { value: "45deg", label: "Diagonal inversa", rotate: -45 },
+];
+
+/** Section fill: one colour, or a two-colour gradient (plus the glow on blocks that have one). */
+function BackgroundTool({
+  value: v,
+  onChange,
+}: {
+  value: SectionBackground;
+  onChange: (patch: Record<string, string | boolean>) => void;
+}) {
+  const preview = v.gradient ? `linear-gradient(${v.direction}, ${v.from}, ${v.to})` : v.base;
+  return (
+    <Popover>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex h-[34px] shrink-0 items-center gap-2 rounded-[9px] px-2.5 text-[13px] text-foreground hover:bg-surface-2 data-[state=open]:bg-surface-2"
+            >
+              <PaintBucket className="h-4 w-4 text-muted-foreground" /> Fundo
+              <span className="flex -space-x-1.5">
+                <Swatch color={v.gradient ? v.from : v.base} />
+                {v.gradient && <Swatch color={v.to} />}
+                {v.glow && <Swatch color={v.glow} round />}
+              </span>
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Fundo da seção</TooltipContent>
+      </Tooltip>
+      <PopoverContent
+        align="start"
+        sideOffset={10}
+        className="w-72 space-y-4 rounded-xl border-border bg-surface p-4"
+        data-editor-control
+      >
+        <div
+          className="h-14 rounded-lg shadow-[inset_0_0_0_1px_rgb(245_244_241/0.12)] transition-[background] duration-300"
+          style={{ background: preview }}
+        />
+        <div className="ae-seg" role="radiogroup" aria-label="Tipo de fundo">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!v.gradient}
+            aria-pressed={!v.gradient}
+            onClick={() => onChange({ gradientEnabled: false })}
+            className="flex-1 text-xs"
+          >
+            Cor sólida
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={v.gradient}
+            aria-pressed={v.gradient}
+            onClick={() =>
+              onChange({ gradientEnabled: true, gradientFrom: v.from, gradientTo: v.to })
+            }
+            className="flex-1 text-xs"
+          >
+            Gradiente
+          </button>
+        </div>
+        {v.gradient ? (
+          <>
+            <ColorRow
+              label="Cor inicial"
+              value={v.from}
+              onChange={(c) => onChange({ gradientFrom: c })}
+            />
+            <ColorRow
+              label="Cor final"
+              value={v.to}
+              onChange={(c) => onChange({ gradientTo: c })}
+            />
+            <div>
+              <span className="ae-label mb-1.5 block">Direção</span>
+              <div className="grid grid-cols-4 gap-1.5">
+                {DIRECTIONS.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    title={d.label}
+                    aria-label={d.label}
+                    aria-pressed={v.direction === d.value}
+                    onClick={() => onChange({ gradientDirection: d.value })}
+                    className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
+                      v.direction === d.value
+                        ? "border-ion text-ion"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <ArrowRightSmall rotate={d.rotate} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <ColorRow label="Cor" value={v.base} onChange={(c) => onChange({ bg: c })} />
+        )}
+        {v.glow !== undefined && (
+          <ColorRow label="Cor do brilho" value={v.glow} onChange={(c) => onChange({ glow: c })} />
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ArrowRightSmall({ rotate }: { rotate: number }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      style={{ transform: `rotate(${rotate}deg)` }}
+      aria-hidden
+    >
+      <path
+        d="M2.5 8h10m0 0L9 4.5M12.5 8 9 11.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Swatch({ color, round }: { color: string; round?: boolean }) {
+  return (
+    <span
+      className={`relative h-5 w-5 shadow-[0_0_0_1.5px_var(--surface),0_0_0_2.5px_rgb(245_244_241/0.28)] ${round ? "rounded-full" : "rounded-md"}`}
+      style={{ background: color }}
+    />
+  );
+}
+
+function ColorRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const safe = /^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff";
+  return (
+    <label className="flex items-center justify-between gap-3">
+      <span className="text-[13px] text-foreground">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className="font-mono text-xs uppercase text-muted-foreground">{safe}</span>
+        <span
+          className="relative h-8 w-8 rounded-lg shadow-[0_0_0_1px_rgb(245_244_241/0.28)]"
+          style={{ background: safe }}
+        >
+          <input
+            type="color"
+            aria-label={label}
+            value={safe}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        </span>
+      </span>
+    </label>
+  );
+}
+
+const CORNERS: { value: number; label: string; radius: string }[] = [
+  { value: 0, label: "Cantos retos", radius: "0px" },
+  { value: 8, label: "Cantos suaves", radius: "4px" },
+  { value: 999, label: "Cantos redondos", radius: "999px" },
+];
+
+/** Button corners: straight, soft or pill. */
+function CornerTool({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div
+      className="mx-1 flex shrink-0 items-center gap-0.5"
+      role="radiogroup"
+      aria-label="Cantos do botão"
+    >
+      {CORNERS.map((c) => (
+        <Tool
+          key={c.value}
+          label={c.label}
+          pressed={value === c.value}
+          onClick={() => onChange(value === c.value ? -1 : c.value)}
+        >
+          <span
+            className="block h-3.5 w-5 border-[1.75px] border-current"
+            style={{ borderRadius: c.radius }}
+            aria-hidden
+          />
+        </Tool>
+      ))}
+    </div>
   );
 }
 

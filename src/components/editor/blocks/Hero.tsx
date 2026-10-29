@@ -16,6 +16,8 @@ export function HeroGradient({ props }: P) {
   const bg = str(props, "bg", "#000000");
   const textColor = str(props, "textColor", "#FFFFFF");
   const accent = str(props, "accent", "#D4D4D8");
+  // Second colour of the backdrop glow; falls back to the accent for older sites.
+  const glow = str(props, "glow", accent);
   const stats = list(props, "stats");
   const showStats = bool(props, "showStats");
   return (
@@ -24,9 +26,9 @@ export function HeroGradient({ props }: P) {
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.18]"
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
-          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${accent} 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, ${accent}55 0%, transparent 60%)`,
+          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${glow} 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, ${glow}55 0%, transparent 60%)`,
         }}
       />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-20 sm:py-32 text-center">

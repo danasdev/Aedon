@@ -21,7 +21,8 @@ import { encodeImage, parseImage } from "@/lib/editor/images";
 import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
 import { uuid } from "@/lib/editor/id";
 import { findElementInPreview, imageSourceOf } from "@/lib/editor/preview";
-import type { Device } from "@/lib/editor/types";
+import type { Device, PropMap } from "@/lib/editor/types";
+import { GLOW_VARIANTS } from "@/lib/editor/palettes";
 import { useCanvasDrag } from "@/hooks/use-canvas-drag";
 import { useCloudSync } from "@/lib/supabase/sync";
 import { uploadProjectImage } from "@/lib/supabase/image-upload";
@@ -30,7 +31,7 @@ import { FileText, GripVertical, Layers, Palette, Plus, type LucideIcon } from "
 import type { LinkResolver } from "./blocks/_link";
 import { Canvas } from "./Canvas";
 import { ContentDrawer } from "./ContentDrawer";
-import { ContextToolbar } from "./ContextToolbar";
+import { ContextToolbar, type SectionBackground } from "./ContextToolbar";
 import { EditorTopBar } from "./EditorTopBar";
 import { EmptyPageStart } from "./EmptyPageStart";
 import { FontLoader } from "./FontLoader";
@@ -86,6 +87,28 @@ function scrollCanvasToSection(sectionId: string, attempt = 0) {
   }
 }
 
+/** What the toolbar's "Fundo" control shows and edits for a section. */
+function sectionBackgroundOf(props: PropMap, variantId: string): SectionBackground {
+  const text = (key: string, fallback: string) =>
+    typeof props[key] === "string" && props[key] ? (props[key] as string) : fallback;
+  const base = text("bg", "#000000");
+  const accent = text("accent", "#888888");
+  return {
+    base,
+    gradient: props.gradientEnabled === true,
+    from: text("gradientFrom", base),
+    to: text("gradientTo", accent),
+    direction: text("gradientDirection", "135deg"),
+    glow: GLOW_VARIANTS.has(variantId) ? text("glow", accent) : undefined,
+  };
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 function rgbToHex(rgb: string) {
   const parts = rgb.match(/\d+(?:\.\d+)?/g)?.slice(0, 3);
   if (!parts || parts.length !== 3) return "#ffffff";
@@ -121,8 +144,24 @@ export function EditorShell({
   const [contentOpen, setContentOpen] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [editRequest, setEditRequest] = useState(0);
-  const [elementInfo, setElementInfo] = useState({ color: "#ffffff", src: "" });
+  const [elementInfo, setElementInfo] = useState({ color: "#ffffff", bg: "#000000", src: "" });
   const [tourOpen, setTourOpen] = useState(false);
+  const [flash, setFlash] = useState<{ id: string; nonce: number } | null>(null);
+  const [leavingId, setLeavingId] = useState<string | null>(null);
+  const [saveTick, setSaveTick] = useState(0);
+
+  /** Briefly highlight a section so the user sees where a change landed. */
+  const pulse = useCallback((id: string) => setFlash({ id, nonce: Date.now() }), []);
+
+  // Every change is autosaved; bump a counter so the top bar can confirm it.
+  const firstProject = useRef(true);
+  useEffect(() => {
+    if (firstProject.current || !store.hydrated) {
+      if (store.hydrated) firstProject.current = false;
+      return;
+    }
+    setSaveTick((n) => n + 1);
+  }, [store.project, store.hydrated]);
 
   // First visit: a short guided tour. It can be replayed from the "?" in the top bar.
   useEffect(() => {
@@ -189,8 +228,10 @@ export function EditorShell({
     if (!selectedId || !selectedElement) return;
     const node = findElementInPreview(selectedId, selectedElement.selector);
     if (!node) return;
+    const style = node.ownerDocument.defaultView?.getComputedStyle(node);
     setElementInfo({
-      color: rgbToHex(node.ownerDocument.defaultView?.getComputedStyle(node).color ?? ""),
+      color: rgbToHex(style?.color ?? ""),
+      bg: rgbToHex(style?.backgroundColor ?? ""),
       src: imageSourceOf(node),
     });
   }, [selectedId, selectedElement, sections]);
@@ -235,8 +276,9 @@ export function EditorShell({
       setInsertIndex(null);
       if (isNarrow) setPanel(null);
       window.setTimeout(() => scrollCanvasToSection(id), 120);
+      pulse(id);
     },
-    [isNarrow],
+    [isNarrow, pulse],
   );
 
   const addVariant = useCallback(
@@ -402,6 +444,7 @@ export function EditorShell({
           element: selectedElement,
           layout: elementLayout(sectionLayout, selectedElement.selector),
           renderedColor: elementInfo.color,
+          renderedBg: elementInfo.bg,
           imageSrc: elementInfo.src,
           onPatch: (patch) => patchElement(selected.id, selectedElement.selector, patch),
           onEditText: () => setEditRequest((n) => n + 1),
@@ -422,16 +465,18 @@ export function EditorShell({
         mode="section"
         section={{
           name: selectedVariant.name,
-          background: typeof selected.props.bg === "string" ? selected.props.bg : "#000000",
-          onBackground: (color) => store.updateProp(selected.id, "bg", color),
+          background: sectionBackgroundOf(selected.props, selected.variantId),
+          onBackgroundChange: (patch) => store.updateProps(selected.id, patch),
           onEditContent: () => setContentOpen((open) => !open),
           contentOpen,
           canMoveUp: visibleIndex > 0,
           canMoveDown: visibleIndex >= 0 && visibleIndex < visibleSections.length - 1,
-          onMove: (dir) => store.moveSection(selected.id, dir),
-          onDuplicate: () => {
-            store.duplicateSection(selected.id);
+          onMove: (dir) => {
+            store.moveSection(selected.id, dir);
+            pulse(selected.id);
+            window.setTimeout(() => scrollCanvasToSection(selected.id), 60);
           },
+          onDuplicate: () => afterAdd(store.duplicateSection(selected.id)),
           onHide: () => store.toggleHidden(selected.id),
           onRemove: () => removeSectionWithUndo(selected.id),
         }}
@@ -443,8 +488,23 @@ export function EditorShell({
   // Deleting a section is instant but always reversible: say so, with the way back.
   const removeSectionWithUndo = (id: string) => {
     const name = getVariant(sections.find((s) => s.id === id)?.variantId ?? "")?.name ?? "Seção";
-    store.removeSection(id);
-    toast(`“${name}” foi excluída`, { action: { label: "Desfazer", onClick: () => store.undo() } });
+    const remove = () => {
+      store.removeSection(id);
+      setLeavingId(null);
+      toast(`“${name}” foi excluída`, {
+        action: {
+          label: "Desfazer",
+          onClick: () => {
+            store.undo();
+            pulse(id);
+          },
+        },
+      });
+    };
+    // Let the section fade out first so it's clear what disappeared.
+    if (prefersReducedMotion()) return remove();
+    setLeavingId(id);
+    window.setTimeout(remove, 220);
   };
 
   const togglePanel = (id: Panel) => {
@@ -470,9 +530,15 @@ export function EditorShell({
           setPreviewMode((v) => !v);
           selectSection(null);
         }}
-        onExport={() => downloadHTML(store.project, store.activePageId)}
+        onExport={() => {
+          downloadHTML(store.project, store.activePageId);
+          toast.success(`“${store.activePage.name}” exportada`, {
+            description: "O arquivo HTML foi para a sua pasta de downloads.",
+          });
+        }}
         email={user ? (user.email ?? "") : null}
         syncStatus={syncStatus}
+        saveTick={saveTick}
         onSignOut={user ? () => void signOut() : undefined}
         onOpenTour={() => {
           setPreviewMode(false);
@@ -547,7 +613,7 @@ export function EditorShell({
             }}
             onReorder={store.reorderSections}
             onToggleHidden={store.toggleHidden}
-            onDuplicate={store.duplicateSection}
+            onDuplicate={(id) => afterAdd(store.duplicateSection(id))}
             onRemove={removeSectionWithUndo}
             onClose={() => setPanel(null)}
             overlay={isNarrow}
@@ -587,6 +653,8 @@ export function EditorShell({
           }}
           insertIndex={insertIndex}
           editRequest={editRequest}
+          flash={flash}
+          leavingId={leavingId}
           renderers={RENDERERS}
           typography={store.project.typography}
           previewMode={previewMode}

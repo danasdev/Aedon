@@ -79,8 +79,16 @@ const ROLE_BY_VARIANT: Record<string, Role> = {
   "footer.dark": "inverse",
 };
 
-/** bg / textColor / accent for one block under a palette. */
+/** Blocks whose backdrop has a second colour (a glow) that the palette also sets. */
+export const GLOW_VARIANTS = new Set(["hero.gradient"]);
+
+/** bg / textColor / accent (and glow, where the block has one) under a palette. */
 export function paletteColors(p: Palette, variantId: string): PropMap {
+  const colors = roleColors(p, variantId);
+  return GLOW_VARIANTS.has(variantId) ? { ...colors, glow: p.accent } : colors;
+}
+
+function roleColors(p: Palette, variantId: string): PropMap {
   switch (ROLE_BY_VARIANT[variantId] ?? "base") {
     case "deep":
       return { bg: p.paperDeep, textColor: p.ink, accent: p.accent };

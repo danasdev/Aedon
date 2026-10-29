@@ -119,6 +119,7 @@ const RAW: SectionVariant[] = [
     name: "Hero Gradient",
     description: "Título grande com gradiente e CTA",
     schema: [
+      { key: "glow", label: "Cor do brilho", type: "color" },
       { key: "showEyebrow", label: "Mostrar etiqueta", type: "toggle" },
       {
         key: "eyebrow",

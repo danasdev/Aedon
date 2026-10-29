@@ -167,17 +167,21 @@ export function useProject(projectId: string) {
     [editActivePage],
   );
 
+  /** Returns the copy's id so the editor can point at it. */
   const duplicateSection = useCallback(
-    (id: string) =>
+    (id: string) => {
+      const copyId = uuid();
       editActivePage((sections) => {
         const idx = sections.findIndex((s) => s.id === id);
         if (idx < 0) return sections;
         const src = sections[idx];
-        const copy = { ...src, id: uuid(), props: cloneProps(src.props) };
+        const copy = { ...src, id: copyId, props: cloneProps(src.props) };
         const next = [...sections];
         next.splice(idx + 1, 0, copy);
         return next;
-      }),
+      });
+      return copyId;
+    },
     [editActivePage],
   );
 
@@ -220,6 +224,15 @@ export function useProject(projectId: string) {
     (id: string, key: string, value: PropValue) =>
       editActivePage((sections) =>
         sections.map((s) => (s.id === id ? { ...s, props: { ...s.props, [key]: value } } : s)),
+      ),
+    [editActivePage],
+  );
+
+  /** Several props of one section in a single undo step. */
+  const updateProps = useCallback(
+    (id: string, patch: Record<string, PropValue>) =>
+      editActivePage((sections) =>
+        sections.map((s) => (s.id === id ? { ...s, props: { ...s.props, ...patch } } : s)),
       ),
     [editActivePage],
   );
@@ -521,6 +534,7 @@ export function useProject(projectId: string) {
     moveSection,
     reorderSections,
     updateProp,
+    updateProps,
     beginInteraction,
     endInteraction,
     applyColorsToAllSections,

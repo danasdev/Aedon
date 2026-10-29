@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  Check,
   ChevronDown,
   HelpCircle,
   Download,
@@ -51,6 +52,8 @@ interface Props {
   onExport: () => void;
   email: string | null;
   syncStatus: SyncStatus;
+  /** Bumped on every saved change, to replay the confirmation. */
+  saveTick: number;
   onSignOut?: () => void;
   onOpenTour: () => void;
 }
@@ -132,8 +135,16 @@ export function EditorTopBar(props: Props) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <span className="hidden items-center gap-1.5 text-xs text-faint lg:flex" role="status">
-            <span className={`h-1.5 w-1.5 rounded-full ${sync.dot}`} />
+          <span
+            className="hidden items-center gap-1.5 text-xs text-faint lg:flex"
+            role="status"
+            aria-live="polite"
+          >
+            {props.syncStatus === "idle" || props.syncStatus === "saved" ? (
+              <Check key={props.saveTick} className="ae-check h-3.5 w-3.5 text-[#4cd08a]" />
+            ) : (
+              <span className={`h-1.5 w-1.5 rounded-full ${sync.dot}`} />
+            )}
             {sync.label}
           </span>
         </div>

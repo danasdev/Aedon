@@ -142,7 +142,7 @@ export function ElementSelection({
   return (
     <div
       data-editor-control
-      className="pointer-events-none absolute z-40 rounded-[3px] border-2 border-[#3ccfe0] shadow-[0_0_0_1px_rgba(10,10,10,0.55)]"
+      className="ae-pop pointer-events-none absolute z-40 rounded-[3px] border-2 border-[#3ccfe0] shadow-[0_0_0_1px_rgba(10,10,10,0.55)]"
       style={{ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }}
       onClick={(event) => event.stopPropagation()}
     >

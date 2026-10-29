@@ -47,7 +47,8 @@ export function exportHTML(project: ProjectState, pageId?: string): string {
       Object.entries(parseElementLayout(s.props.elementLayout)).map(
         ([selector, layout]) =>
           `#${sectionAnchorId(s.id)} > ${selector} { ${Object.entries(elementLayoutCss(layout))
-            .map(([k, v]) => `${k}: ${v};`)
+            // Blocks set some colours inline (accent buttons); the user's override must win.
+            .map(([k, v]) => `${k}: ${v} !important;`)
             .join(" ")} }`,
       ),
     )

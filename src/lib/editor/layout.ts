@@ -9,6 +9,10 @@ export type ElementLayout = {
   weight: number;
   italic: boolean;
   align: "" | "left" | "center" | "right";
+  /** Fill override (buttons); "" keeps the block's own. */
+  bg: string;
+  /** Corner radius override in px; -1 keeps the block's own. */
+  radius: number;
 };
 
 export type ElementLayoutMap = Record<string, ElementLayout>;
@@ -29,6 +33,8 @@ export const DEFAULT_ELEMENT_LAYOUT: ElementLayout = {
   weight: 0,
   italic: false,
   align: "",
+  bg: "",
+  radius: -1,
 };
 
 export function parseElementLayout(value: unknown): ElementLayoutMap {
@@ -56,6 +62,8 @@ export function parseElementLayout(value: unknown): ElementLayoutMap {
               item.align === "left" || item.align === "center" || item.align === "right"
                 ? item.align
                 : "",
+            bg: typeof item.bg === "string" && /^#[0-9a-fA-F]{6}$/.test(item.bg) ? item.bg : "",
+            radius: clampNumber(item.radius, -1, 999, -1),
           },
         ]),
     );
@@ -91,5 +99,7 @@ export function elementLayoutCss(layout: ElementLayout): Record<string, string> 
   if (layout.weight) css["font-weight"] = `${layout.weight}`;
   if (layout.italic) css["font-style"] = "italic";
   if (layout.align) css["text-align"] = layout.align;
+  if (layout.bg) css.background = layout.bg;
+  if (layout.radius >= 0) css["border-radius"] = `${layout.radius}px`;
   return css;
 }
