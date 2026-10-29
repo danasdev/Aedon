@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
 import { useProject } from "@/lib/editor/store";
 import { getVariant, RENDERERS } from "@/lib/editor/sections";
 import { downloadHTML } from "@/lib/editor/export";
@@ -13,11 +12,11 @@ import {
 import { SectionLibrary } from "./SectionLibrary";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { Canvas } from "./Canvas";
-import { PageTabs } from "./PageTabs";
+import { EditorTopBar } from "./EditorTopBar";
 import { FontLoader } from "./FontLoader";
 import { useLibraryPrefs } from "@/hooks/use-library-prefs";
 import { useCanvasDrag } from "@/hooks/use-canvas-drag";
-import { useCloudSync, type SyncStatus } from "@/lib/supabase/sync";
+import { useCloudSync } from "@/lib/supabase/sync";
 import { uploadProjectImage } from "@/lib/supabase/image-upload";
 import { signOut } from "@/lib/supabase/auth";
 import type { User } from "@supabase/supabase-js";
@@ -26,23 +25,7 @@ import type { Device } from "@/lib/editor/types";
 import { encodeElementLayout, elementLayout, parseElementLayout, type EditableElement } from "@/lib/editor/layout";
 import { uuid } from "@/lib/editor/id";
 import { encodeImage, parseImage } from "@/lib/editor/images";
-import {
-  Undo2,
-  Redo2,
-  Monitor,
-  Tablet,
-  Smartphone,
-  Download,
-  Menu,
-  Settings2,
-  Eye,
-  Home,
-  Pencil,
-  GripVertical,
-  LogOut,
-  MoreHorizontal,
-} from "lucide-react";
-import { AedonMark } from "./AedonMark";
+import { GripVertical } from "lucide-react";
 import type { PagePreset } from "@/lib/editor/presets";
 
 /**
@@ -86,7 +69,6 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
   const [isNarrow, setIsNarrow] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [propsOpen, setPropsOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [selectedElement, setSelectedElement] = useState<EditableElement | null>(null);
 
   const sections = store.activePage.sections;
@@ -215,126 +197,33 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background text-foreground">
       <FontLoader typography={store.project.typography} />
-      {/* Top bar */}
-      <header className="relative h-14 shrink-0 border-b border-border flex items-center justify-between px-2 sm:px-4 gap-2 bg-card/60 backdrop-blur-xl">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {isNarrow && (
-            <button
-              onClick={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen) setPropsOpen(false); }}
-              className="w-9 h-9 rounded-lg hover:bg-white/5 flex items-center justify-center shrink-0"
-              title="Biblioteca / camadas"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-          )}
-          <Link
-            to="/projects"
-            title="Meus projetos"
-            className="h-8 px-2 rounded-lg flex items-center justify-center gap-1.5 shrink-0 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            <span className="hidden lg:inline text-xs font-medium">Projetos</span>
-          </Link>
-          <div className="hidden xl:flex items-center gap-2 min-w-0">
-            <AedonMark className="w-4 h-4 text-foreground shrink-0" />
-            <span className="text-sm font-medium font-display leading-tight tracking-[0.15em]">AEDON</span>
-          </div>
-          <div className="hidden xl:block mx-1 h-6 w-px bg-border" />
-          <input
-            value={store.project.name}
-            onChange={(e) => store.renameProject(e.target.value)}
-            aria-label="Nome do projeto"
-            title="Nome do projeto"
-            className="bg-transparent text-sm font-medium px-2 py-1 rounded hover:bg-white/5 focus:bg-white/5 outline-none min-w-0 w-24 sm:w-40 xl:w-48"
-          />
-        </div>
-
-        <div className="flex items-center gap-0.5 shrink-0">
-          <DeviceBtn
-            active={device === "desktop"}
-            onClick={() => setDevice("desktop")}
-            Icon={Monitor}
-            label="Desktop"
-          />
-          <DeviceBtn
-            active={device === "tablet"}
-            onClick={() => setDevice("tablet")}
-            Icon={Tablet}
-            label="Tablet"
-          />
-          <DeviceBtn
-            active={device === "mobile"}
-            onClick={() => setDevice("mobile")}
-            Icon={Smartphone}
-            label="Celular"
-          />
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <button
-            onClick={() => setPreviewMode((v) => !v)}
-            className={`h-9 px-3 rounded-full text-xs sm:text-sm font-medium flex items-center gap-2 transition-colors border ${
-              previewMode
-                ? "bg-foreground/10 border-foreground/30 text-foreground"
-                : "border-white/10 hover:border-white/30 hover:bg-white/5 text-foreground"
-            }`}
-            title={previewMode ? "Voltar à edição" : "Pré-visualizar (links navegam)"}
-          >
-            {previewMode ? <Pencil className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{previewMode ? "Editar" : "Prévia"}</span>
-          </button>
-          <button
-            onClick={() => setMoreOpen((open) => !open)}
-            className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
-              moreOpen
-                ? "border-foreground/30 bg-foreground/10 text-foreground"
-                : "border-white/10 text-muted-foreground hover:border-white/30 hover:bg-white/5 hover:text-foreground"
-            }`}
-            title="Mais ações"
-            aria-label="Mais ações"
-            aria-expanded={moreOpen}
-          >
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => downloadHTML(store.project, store.activePageId)}
-            className="h-9 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium bg-primary text-primary-foreground flex items-center gap-2 transition-all hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0"
-            title="Exportar a página como HTML"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exportar</span>
-          </button>
-          <button
-            onClick={() => { setPropsOpen(!propsOpen); if (!propsOpen) setLibraryOpen(false); }}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${propsOpen ? "bg-white/10 text-foreground" : "text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            title="Configurações avançadas"
-            aria-label="Configurações avançadas"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
-        </div>
-        {moreOpen && (
-          <EditorActionsMenu
-            email={user?.email ?? ""}
-            status={syncStatus}
-            onUndo={() => { store.undo(); setMoreOpen(false); }}
-            onRedo={() => { store.redo(); setMoreOpen(false); }}
-            onExport={() => { downloadHTML(store.project, store.activePageId); setMoreOpen(false); }}
-            onSignOut={user ? () => { signOut(); setMoreOpen(false); } : undefined}
-          />
-        )}
-      </header>
-
-      <PageTabs
+      <EditorTopBar
+        projectName={store.project.name}
+        onRenameProject={store.renameProject}
         pages={store.project.pages}
         activePageId={store.activePageId}
-        onSelect={store.setActivePage}
-        onAdd={store.addPage}
-        onRename={store.renamePage}
-        onDuplicate={store.duplicatePage}
-        onDelete={store.removePage}
-        onMove={store.movePage}
+        onSelectPage={store.setActivePage}
+        onAddPage={store.addPage}
+        onRenamePage={store.renamePage}
+        onDuplicatePage={store.duplicatePage}
+        onDeletePage={store.removePage}
+        onMovePage={store.movePage}
+        canUndo={store.canUndo}
+        canRedo={store.canRedo}
+        onUndo={store.undo}
+        onRedo={store.redo}
+        device={device}
+        onDevice={setDevice}
+        previewMode={previewMode}
+        onTogglePreview={() => setPreviewMode((v) => !v)}
+        onExport={() => downloadHTML(store.project, store.activePageId)}
+        isNarrow={isNarrow}
+        onOpenLibrary={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen) setPropsOpen(false); }}
+        propsOpen={propsOpen}
+        onToggleProps={() => { setPropsOpen(!propsOpen); if (!propsOpen) setLibraryOpen(false); }}
+        email={user ? (user.email ?? "") : null}
+        syncStatus={syncStatus}
+        onSignOut={user ? () => { signOut(); } : undefined}
       />
 
       {/* Body */}
@@ -520,104 +409,5 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
         </div>
       )}
     </div>
-  );
-}
-
-function EditorActionsMenu({
-  email,
-  status,
-  onUndo,
-  onRedo,
-  onExport,
-  onSignOut,
-}: {
-  email: string;
-  status: SyncStatus;
-  onUndo: () => void;
-  onRedo: () => void;
-  onExport: () => void;
-  onSignOut?: () => void;
-}) {
-  const label: Record<SyncStatus, string> = {
-    idle: "",
-    loading: "Carregando…",
-    saving: "Salvando…",
-    saved: "Salvo na nuvem",
-    error: "Erro ao salvar",
-  };
-  const dot =
-    status === "error"
-      ? "bg-destructive"
-      : status === "saving" || status === "loading"
-        ? "bg-yellow-400 animate-pulse"
-        : "bg-emerald-400";
-  return (
-    <div className="absolute right-2 top-12 z-50 w-56 rounded-xl border border-border bg-card p-1.5 shadow-2xl">
-      <div className="flex items-center gap-2 px-2.5 py-2 text-xs text-muted-foreground" title={label[status]}>
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-        <span className="min-w-0 truncate">{email || "Projeto local"}</span>
-      </div>
-      <div className="my-1 h-px bg-border" />
-      <MenuAction Icon={Undo2} label="Desfazer" shortcut="Ctrl Z" onClick={onUndo} />
-      <MenuAction Icon={Redo2} label="Refazer" shortcut="Ctrl Shift Z" onClick={onRedo} />
-      <MenuAction Icon={Download} label="Exportar HTML" onClick={onExport} />
-      {onSignOut && (
-        <>
-          <div className="my-1 h-px bg-border" />
-          <MenuAction Icon={LogOut} label="Sair" onClick={onSignOut} />
-        </>
-      )}
-    </div>
-  );
-}
-
-function MenuAction({
-  Icon,
-  label,
-  shortcut,
-  onClick,
-}: {
-  Icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  shortcut?: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full h-8 px-2.5 rounded-lg flex items-center gap-2 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
-    >
-      <Icon className="w-3.5 h-3.5" />
-      <span className="flex-1 text-left">{label}</span>
-      {shortcut && <span className="text-[10px] text-muted-foreground/70">{shortcut}</span>}
-    </button>
-  );
-}
-
-function DeviceBtn({
-  active,
-  onClick,
-  Icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  Icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      aria-label={`Visualizar em ${label}`}
-      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-        active
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      <Icon className="w-4 h-4" />
-    </button>
   );
 }
