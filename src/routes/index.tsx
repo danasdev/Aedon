@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landing } from "@/components/landing/Landing";
+import { SHOWCASE_FONTS_HREF } from "@/components/landing/templates";
 
 export const Route = createFileRoute("/")({
   head: () => ({
+    // Families used inside the template mockups of the 3D gallery.
+    links: [{ rel: "stylesheet", href: SHOWCASE_FONTS_HREF }],
     meta: [
       { title: "Aedon — Construtor visual de sites" },
       {
