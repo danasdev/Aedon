@@ -557,6 +557,8 @@ export function EditorShell({
           <StylePanel
             typography={store.project.typography}
             onTypographyChange={store.updateTypography}
+            paletteId={store.project.palette}
+            onApplyPalette={store.applyPalette}
             colorSource={sections.length > 1 && selectedVariant ? selectedVariant.name : null}
             onApplyColorsToAll={() => selected && store.applyColorsToAllSections(selected.id)}
             onClose={() => setPanel(null)}

@@ -86,6 +86,8 @@ export interface ProjectState {
   pages: Page[];
   typography: Typography;
   billing: BillingState;
+  /** Id of the site palette last applied from "Estilo do site" (see lib/editor/palettes.ts). */
+  palette?: string;
 }
 
 /**

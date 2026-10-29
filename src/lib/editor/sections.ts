@@ -1,3 +1,4 @@
+import { DEFAULT_PALETTE, paletteColors } from "./palettes";
 import type {
   SectionVariant,
   SectionKind,
@@ -45,28 +46,11 @@ const COLOR_FIELDS: FieldSchema[] = [
   { key: "textColor", label: "Cor do texto", type: "color" },
   { key: "accent", label: "Cor de destaque", type: "color" },
 ];
-/** Default palette for new blocks: paper, ink and a moss accent — calm and readable. */
-const PAPER = "#F6F3EC";
-const PAPER_DEEP = "#EFEADF";
-const INK = "#161512";
-const MOSS = "#1F4D3A";
-const COLOR_DEFAULTS: PropMap = { bg: PAPER, textColor: INK, accent: MOSS };
-
-/** A few blocks start on a deeper tone so a fresh page has rhythm instead of one flat colour. */
-const PALETTE_BY_VARIANT: Record<string, PropMap> = {
-  "features.grid": { bg: PAPER_DEEP },
-  "testimonials.cards": { bg: PAPER_DEEP },
-  "text.quote": { bg: PAPER_DEEP },
-  "gallery.filmstrip": { bg: PAPER_DEEP },
-  "cta.banner": { bg: MOSS, textColor: PAPER, accent: PAPER },
-  "footer.dark": { bg: INK, textColor: PAPER, accent: "#D8CFBD" },
-};
-
 function withColors(v: SectionVariant): SectionVariant {
   return {
     ...v,
     schema: [...v.schema, ...COLOR_FIELDS],
-    defaults: { ...COLOR_DEFAULTS, ...PALETTE_BY_VARIANT[v.id], ...v.defaults },
+    defaults: { ...paletteColors(DEFAULT_PALETTE, v.id), ...v.defaults },
   };
 }
 

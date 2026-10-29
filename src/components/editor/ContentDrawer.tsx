@@ -10,8 +10,13 @@ import type {
 import { str, bool, list } from "@/lib/editor/props";
 import { decodeLink, encodeLink, type LinkOptions } from "@/lib/editor/links";
 import { parseImage, encodeImage, objectPosition } from "@/lib/editor/images";
-import { elementLayout, encodeElementLayout, parseElementLayout, type EditableElement, type ElementLayout } from "@/lib/editor/layout";
-import { TypographyPanel } from "./TypographyPanel";
+import {
+  elementLayout,
+  encodeElementLayout,
+  parseElementLayout,
+  type EditableElement,
+  type ElementLayout,
+} from "@/lib/editor/layout";
 import { PricingPanel } from "./PricingPanel";
 import {
   ArrowLeft,
@@ -113,11 +118,19 @@ export function ContentDrawer(props: Props) {
             <p className="ae-eyebrow">Conteúdo</p>
             <h2 className="ae-title mt-0.5 truncate">{variant.name}</h2>
           </div>
-          <button type="button" onClick={onClose} className="ae-ib h-8 w-8" aria-label="Fechar conteúdo">
+          <button
+            type="button"
+            onClick={onClose}
+            className="ae-ib h-8 w-8"
+            aria-label="Fechar conteúdo"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div ref={contentRef} className="editor-panel-content flex-1 overflow-y-auto scrollbar-thin">
+        <div
+          ref={contentRef}
+          className="editor-panel-content flex-1 overflow-y-auto scrollbar-thin"
+        >
           <SectionFields
             instance={instance}
             variant={variant}
@@ -160,7 +173,9 @@ function Disclosure({
       >
         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
         <span className="flex-1">{title}</span>
-        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && <div className="border-t border-white/10">{children}</div>}
     </div>
@@ -179,7 +194,10 @@ function ExtrasSection({
   const moved = Object.keys(parseElementLayout(instance.props.elementLayout)).length;
   if (items.length === 0 && moved === 0) return null;
   const update = (id: string, key: string, value: string) =>
-    onChange("customElements", items.map((item) => (item._id === id ? { ...item, [key]: value } : item)));
+    onChange(
+      "customElements",
+      items.map((item) => (item._id === id ? { ...item, [key]: value } : item)),
+    );
   const input =
     "min-h-10 w-full rounded-lg border border-border bg-input/50 px-3 py-2 text-sm outline-none focus:border-foreground/50";
   return (
@@ -190,10 +208,23 @@ function ExtrasSection({
             {items.map((item) => (
               <div key={item._id} className="rounded-lg border border-white/10 p-2">
                 <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{{ text: "Texto", button: "Botão", image: "Imagem", divider: "Divisor", box: "Caixa" }[item.type] ?? item.type}</span>
+                  <span>
+                    {{
+                      text: "Texto",
+                      button: "Botão",
+                      image: "Imagem",
+                      divider: "Divisor",
+                      box: "Caixa",
+                    }[item.type] ?? item.type}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => onChange("customElements", items.filter((i) => i._id !== item._id))}
+                    onClick={() =>
+                      onChange(
+                        "customElements",
+                        items.filter((i) => i._id !== item._id),
+                      )
+                    }
                     className="rounded px-1.5 py-0.5 hover:bg-destructive/15 hover:text-destructive"
                   >
                     Remover
@@ -203,7 +234,9 @@ function ExtrasSection({
                   <input
                     value={item.type === "image" ? (item.src ?? "") : (item.text ?? "")}
                     placeholder={item.type === "image" ? "URL da imagem" : "Conteúdo"}
-                    onChange={(e) => update(item._id, item.type === "image" ? "src" : "text", e.target.value)}
+                    onChange={(e) =>
+                      update(item._id, item.type === "image" ? "src" : "text", e.target.value)
+                    }
                     className={input}
                   />
                 )}
@@ -260,7 +293,9 @@ function SectionFields({
   const contentSchema = variant.schema.filter((f) => f.type !== "color");
   const groups = groupFields(contentSchema);
   const renderField = (f: FieldSchema) =>
-    f.type === "list" && f.key === "images" && f.itemSchema?.some((item) => item.type === "image") ? (
+    f.type === "list" &&
+    f.key === "images" &&
+    f.itemSchema?.some((item) => item.type === "image") ? (
       <PhotoGridField
         key={f.key}
         field={f}
@@ -319,9 +354,7 @@ function SectionFields({
 
       {colorFields.length > 0 && (
         <div>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-            Cores
-          </div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Cores</div>
           <div className="grid grid-cols-3 gap-2">
             {colorFields.map((f) => (
               <ColorSwatchField
@@ -400,7 +433,8 @@ function VisualEffectsPanel({
   const gradientEnabled = bool(instance.props, "gradientEnabled");
   const base = str(instance.props, "bg", "#000000");
   const accent = str(instance.props, "accent", "#D4D4D8");
-  const control = "w-full rounded-lg border border-border bg-input/40 px-3 py-2 text-xs text-foreground outline-none focus:border-foreground/40";
+  const control =
+    "w-full rounded-lg border border-border bg-input/40 px-3 py-2 text-xs text-foreground outline-none focus:border-foreground/40";
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
@@ -412,7 +446,9 @@ function VisualEffectsPanel({
       >
         <span>
           <span className="block text-xs font-medium text-foreground">Fundo e movimento</span>
-          <span className="mt-0.5 block text-xs text-muted-foreground">Gradiente, entrada e comportamento no scroll</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            Gradiente, entrada e comportamento no scroll
+          </span>
         </span>
         <span className="text-xs text-muted-foreground">{open ? "−" : "+"}</span>
       </button>
@@ -424,8 +460,12 @@ function VisualEffectsPanel({
             className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-input/40 px-3 py-2.5 text-left"
           >
             <span className="text-xs font-medium text-foreground">Usar gradiente</span>
-            <span className={`relative h-5 w-9 rounded-full transition-colors ${gradientEnabled ? "bg-foreground" : "bg-white/15"}`}>
-              <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${gradientEnabled ? "translate-x-4" : ""}`} />
+            <span
+              className={`relative h-5 w-9 rounded-full transition-colors ${gradientEnabled ? "bg-foreground" : "bg-white/15"}`}
+            >
+              <span
+                className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${gradientEnabled ? "translate-x-4" : ""}`}
+              />
             </span>
           </button>
           {gradientEnabled && (
@@ -532,9 +572,7 @@ function ScalarField({
   const val = str(instance.props, f.key);
   return (
     <div>
-      <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
-        {f.label}
-      </label>
+      <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{f.label}</label>
       <FieldInput
         field={f}
         value={val}
@@ -645,9 +683,14 @@ function PhotoGridField({
       <div className="flex items-center justify-between mb-2">
         <div>
           <label className="text-xs text-muted-foreground font-medium">{f.label}</label>
-          <p className="mt-0.5 text-xs text-muted-foreground/70">Arraste uma foto pelo ícone para alterar a posição no grid.</p>
+          <p className="mt-0.5 text-xs text-muted-foreground/70">
+            Arraste uma foto pelo ícone para alterar a posição no grid.
+          </p>
         </div>
-        <span className="text-xs text-muted-foreground/70">{items.length}{f.max ? `/${f.max}` : ""}</span>
+        <span className="text-xs text-muted-foreground/70">
+          {items.length}
+          {f.max ? `/${f.max}` : ""}
+        </span>
       </div>
       <div className="grid grid-cols-1 gap-3">
         {items.map((item, index) => (
@@ -665,7 +708,9 @@ function PhotoGridField({
             }`}
           >
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground/70">Foto {index + 1}</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                Foto {index + 1}
+              </span>
               <div className="flex items-center gap-1">
                 <span
                   draggable
@@ -681,7 +726,11 @@ function PhotoGridField({
                 >
                   <GripVertical className="w-3.5 h-3.5" />
                 </span>
-                <MiniBtn onClick={() => onRemove(item._id)} disabled={!canRemove} title="Remover foto">
+                <MiniBtn
+                  onClick={() => onRemove(item._id)}
+                  disabled={!canRemove}
+                  title="Remover foto"
+                >
                   <Trash2 className="w-3 h-3" />
                 </MiniBtn>
               </div>
@@ -772,9 +821,7 @@ function ListField({
             {itemSchema.map((sf) => (
               <div key={sf.key}>
                 {itemSchema.length > 1 && (
-                  <label className="text-xs text-muted-foreground/80 mb-1 block">
-                    {sf.label}
-                  </label>
+                  <label className="text-xs text-muted-foreground/80 mb-1 block">{sf.label}</label>
                 )}
                 <FieldInput
                   field={sf}
@@ -953,7 +1000,11 @@ function FocalImageInput({
           className="h-9 shrink-0 rounded-lg border border-border px-2.5 text-xs font-medium text-foreground hover:bg-white/5 hover:border-foreground/30 disabled:opacity-60 flex items-center gap-1.5 transition-colors"
           title="Escolher imagem do dispositivo"
         >
-          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+          {uploading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <ImagePlus className="w-3.5 h-3.5" />
+          )}
           <span className="hidden sm:inline">{uploading ? "Enviando" : "Enviar"}</span>
         </button>
         <input
@@ -964,7 +1015,9 @@ function FocalImageInput({
           onChange={(e) => void selectFile(e.target.files?.[0])}
         />
       </div>
-      <p className="text-xs text-muted-foreground">Envie uma imagem do dispositivo ou cole uma URL. Até 5 MB na nuvem e 1,5 MB no modo local.</p>
+      <p className="text-xs text-muted-foreground">
+        Envie uma imagem do dispositivo ou cole uma URL. Até 5 MB na nuvem e 1,5 MB no modo local.
+      </p>
       {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
       {img.src && (
         <>

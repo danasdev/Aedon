@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { paletteColors, type Palette } from "./palettes";
 import type { Page, ProjectState, PropValue, SectionInstance, Typography } from "./types";
 import { createInstance, cloneProps, getVariant } from "./sections";
 import { DEFAULT_TYPOGRAPHY } from "./typography";
@@ -55,6 +56,7 @@ function normalize(raw: unknown): ProjectState {
     typography: { ...DEFAULT_TYPOGRAPHY, ...(p.typography ?? {}) },
     pages,
     billing: { addons: { ...(p.billing?.addons ?? {}) } },
+    palette: typeof p.palette === "string" ? p.palette : undefined,
   };
 }
 
@@ -315,12 +317,18 @@ export function useProject(projectId: string) {
       });
       commit((p) => ({
         ...p,
-        pages: [...p.pages, {
-          id,
-          name,
-          slug: uniqueSlug(slugify(name), p.pages.map((page) => page.slug)),
-          sections,
-        }],
+        pages: [
+          ...p.pages,
+          {
+            id,
+            name,
+            slug: uniqueSlug(
+              slugify(name),
+              p.pages.map((page) => page.slug),
+            ),
+            sections,
+          },
+        ],
       }));
       setActivePageId(id);
       return sections.map((section) => section.id);
@@ -435,6 +443,23 @@ export function useProject(projectId: string) {
     [commit],
   );
 
+  /** Recolour every block on every page from a site palette, keeping each block's role. */
+  const applyPalette = useCallback(
+    (palette: Palette) =>
+      commit((p) => ({
+        ...p,
+        palette: palette.id,
+        pages: p.pages.map((page) => ({
+          ...page,
+          sections: page.sections.map((s) => ({
+            ...s,
+            props: { ...s.props, ...paletteColors(palette, s.variantId), gradientEnabled: false },
+          })),
+        })),
+      })),
+    [commit],
+  );
+
   const renameProject = useCallback((name: string) => commit((p) => ({ ...p, name })), [commit]);
 
   // --- Billing -----------------------------------------------------------------
@@ -510,6 +535,7 @@ export function useProject(projectId: string) {
     renamePage,
     movePage,
     updateTypography,
+    applyPalette,
     toggleBillingAddon,
     renameProject,
     replaceProject,

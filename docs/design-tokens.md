@@ -30,6 +30,11 @@ Design de referência: Figma "Aedon — Nova interface" (https://www.figma.com/d
 - Ajustes por elemento (posição, tamanho, cor, peso, itálico, alinhamento) ficam em `elementLayout` e são aplicados igual no canvas e no HTML exportado (`elementLayoutCss`).
 - Telas estreitas (< 1024 px): painéis e gaveta viram sobreposição.
 
+## Estilo do site
+
+- Painel em três partes: **Cores** (paletas prontas em `lib/editor/palettes.ts`, aplicadas a todas as páginas com o papel de cada bloco — base, fundo alternado, faixa de destaque, rodapé invertido), **Fontes** (combinações com amostra "Aa" na fonte real) e **Ajustar fontes e espaçamento** recolhido (fontes, pesos, tamanho, altura da linha, espaço entre letras).
+- Sem prévia separada: o próprio site é a prévia. "Usar as cores de “seção” nesta página" só aparece com uma seção selecionada. Tudo pode ser desfeito.
+
 ## Primeiro uso
 
 - Tutorial de 5 passos (`OnboardingTour`) na primeira visita ao editor: canvas, barra contextual, Adicionar, Páginas, Prévia/Exportar. Destaca a área real, pode ser pulado (Esc), navega por teclado e mantém o foco dentro do cartão. Reabre pelo "?" no topo. Estado em `localStorage` (`aedon.tour.v1`, `lib/editor/tour.ts`).
