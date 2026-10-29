@@ -1,5 +1,14 @@
 import type { PropMap } from "@/lib/editor/types";
-import { str, bool, list, headingStyle, SiteLink, SmartImage, textVars } from "./_shared";
+import {
+  str,
+  bool,
+  list,
+  headingStyle,
+  SiteLink,
+  SmartImage,
+  textVars,
+  accentButton,
+} from "./_shared";
 
 type P = { props: PropMap };
 
@@ -15,14 +24,14 @@ export function HeroGradient({ props }: P) {
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-40"
+        className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
           background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${accent} 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, ${accent}55 0%, transparent 60%)`,
         }}
       />
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-20 sm:py-32 text-center">
         {bool(props, "showEyebrow", true) && str(props, "eyebrow") && (
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[color:var(--tc-70)] mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--tc-15)] bg-[color:var(--tc-5)] px-3 py-1 text-xs text-[color:var(--tc-70)] mb-6 sm:mb-8">
             <span
               className="w-1.5 h-1.5 rounded-full animate-pulse"
               style={{ background: accent }}
@@ -42,18 +51,15 @@ export function HeroGradient({ props }: P) {
         <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <SiteLink
             link={str(props, "ctaLink")}
-            className="w-full sm:w-auto inline-flex items-center justify-center text-black font-medium px-6 py-3 rounded-full transition-transform hover:scale-105 cursor-pointer"
-            style={{
-              background: `linear-gradient(135deg, ${accent}66, ${accent})`,
-              boxShadow: `0 0 40px -8px ${accent}`,
-            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center font-medium px-6 py-3 rounded-full transition-transform hover:-translate-y-0.5 cursor-pointer"
+            style={accentButton(accent)}
           >
             {str(props, "cta")}
           </SiteLink>
           {bool(props, "showSecondaryCta", true) && str(props, "ctaSecondary") && (
             <SiteLink
               link={str(props, "ctaSecondaryLink")}
-              className="w-full sm:w-auto inline-flex items-center justify-center text-[color:var(--tc-80)] hover:text-[color:var(--tc)] font-medium px-6 py-3 rounded-full border border-white/10 hover:border-white/30 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center text-[color:var(--tc-80)] hover:text-[color:var(--tc)] font-medium px-6 py-3 rounded-full border border-[color:var(--tc-15)] hover:border-[color:var(--tc-40)] transition-all cursor-pointer"
             >
               {str(props, "ctaSecondary")}
             </SiteLink>
@@ -92,7 +98,7 @@ export function HeroSplit({ props }: P) {
         <div>
           {bool(props, "showBadge") && str(props, "badge") && (
             <div
-              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white mb-4"
+              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-[color:var(--tc)] mb-4"
               style={{ background: `${accent}22`, border: `1px solid ${accent}55` }}
             >
               {str(props, "badge")}
@@ -114,15 +120,15 @@ export function HeroSplit({ props }: P) {
           >
             <SiteLink
               link={str(props, "ctaLink")}
-              className="inline-flex items-center justify-center text-black font-medium px-6 py-3 rounded-full cursor-pointer"
-              style={{ background: `linear-gradient(135deg, ${accent}66, ${accent})` }}
+              className="inline-flex items-center justify-center font-medium px-6 py-3 rounded-full transition-transform hover:-translate-y-0.5 cursor-pointer"
+              style={accentButton(accent)}
             >
               {str(props, "cta")}
             </SiteLink>
             {bool(props, "showSecondaryCta") && str(props, "ctaSecondary") && (
               <SiteLink
                 link={str(props, "ctaSecondaryLink")}
-                className="inline-flex items-center justify-center text-[color:var(--tc-80)] hover:text-[color:var(--tc)] font-medium px-6 py-3 rounded-full border border-white/10 hover:border-white/30 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center text-[color:var(--tc-80)] hover:text-[color:var(--tc)] font-medium px-6 py-3 rounded-full border border-[color:var(--tc-15)] hover:border-[color:var(--tc-40)] transition-all cursor-pointer"
               >
                 {str(props, "ctaSecondary")}
               </SiteLink>
@@ -130,11 +136,11 @@ export function HeroSplit({ props }: P) {
           </div>
         </div>
         {showImage && (
-          <div className="relative rounded-2xl overflow-hidden aspect-[4/5] border border-white/10">
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/5] border border-[color:var(--tc-15)]">
             <SmartImage value={str(props, "image")} />
             <div
               className="pointer-events-none absolute inset-0"
-              style={{ background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6))" }}
+              style={{ background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.25))" }}
             />
           </div>
         )}

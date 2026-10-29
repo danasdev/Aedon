@@ -1,6 +1,6 @@
 import type { Typography } from "@/lib/editor/types";
 import { FONTS, PAIRINGS, getFont, fontStack } from "@/lib/editor/typography";
-import { Type } from "lucide-react";
+import { Type } from "@/components/icons";
 
 interface Props {
   typography: Typography;
@@ -66,7 +66,7 @@ export function TypographyPanel({ typography: t, onChange }: Props) {
                 >
                   {p.label}
                 </div>
-                <div className="text-[10px] text-muted-foreground truncate">
+                <div className="text-xs text-muted-foreground truncate">
                   {p.heading} · {p.body}
                 </div>
               </button>
@@ -145,7 +145,7 @@ function Group({
 }) {
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground">
         {icon && <Type className="w-3 h-3" />}
         {label}
       </div>
@@ -165,7 +165,7 @@ function FontSelect({
 }) {
   return (
     <label className="block">
-      <span className="text-[11px] text-muted-foreground font-medium mb-1.5 block">{label}</span>
+      <span className="text-xs text-muted-foreground font-medium mb-1.5 block">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -198,7 +198,7 @@ function WeightSelect({
     : weights.reduce((a, b) => (Math.abs(b - value) < Math.abs(a - value) ? b : a));
   return (
     <label className="block">
-      <span className="text-[11px] text-muted-foreground font-medium mb-1.5 block">{label}</span>
+      <span className="text-xs text-muted-foreground font-medium mb-1.5 block">{label}</span>
       <select
         value={effective}
         onChange={(e) => onChange(Number(e.target.value))}
@@ -234,8 +234,8 @@ function Slider({
   return (
     <label className="block">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
-        <span className="text-[11px] font-mono text-white/70">
+        <span className="text-xs text-muted-foreground font-medium">{label}</span>
+        <span className="text-xs text-white/70">
           {value}
           {suffix ?? ""}
         </span>

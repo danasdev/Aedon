@@ -25,7 +25,7 @@ import {
   Trash2,
   Type,
   Upload,
-} from "lucide-react";
+} from "@/components/icons";
 
 type SectionActions = {
   name: string;
@@ -88,7 +88,7 @@ export function ContextToolbar(props: Props) {
 
 function Tag({ icon: Icon, children }: { icon: typeof Type; children: ReactNode }) {
   return (
-    <span className="mr-1 flex h-[30px] shrink-0 items-center gap-1.5 rounded-lg bg-ion/12 px-2.5 font-mono text-[11px] text-ion">
+    <span className="mr-1 flex h-[30px] shrink-0 items-center gap-1.5 rounded-lg bg-ion/12 px-2.5 text-xs text-ion">
       <Icon className="h-3.5 w-3.5" />
       {children}
     </span>
@@ -132,7 +132,7 @@ function Tool({
       </TooltipTrigger>
       <TooltipContent side="bottom">
         {label}
-        {shortcut && <kbd className="ml-2 font-mono text-[10px] opacity-60">{shortcut}</kbd>}
+        {shortcut && <kbd className="ml-2 font-mono text-xs opacity-60">{shortcut}</kbd>}
       </TooltipContent>
     </Tooltip>
   );
@@ -176,7 +176,7 @@ function ColorTool({
 function SectionTools(s: SectionActions) {
   return (
     <>
-      <Tag icon={Square}>{s.name.toLowerCase()}</Tag>
+      <Tag icon={Square}>{s.name}</Tag>
       <ColorTool label="Cor de fundo da seção" value={s.background} onChange={s.onBackground}>
         <PaintBucket className="h-4 w-4 text-muted-foreground" /> Fundo
       </ColorTool>
@@ -214,7 +214,7 @@ function ElementTools({ sectionName, ...el }: ElementActions & { sectionName: st
   const setScale = (next: number) => el.onPatch({ scale: Math.max(50, Math.min(200, next)) });
   return (
     <>
-      <Tag icon={KIND_ICON[el.element.kind]}>{el.element.label.toLowerCase()}</Tag>
+      <Tag icon={KIND_ICON[el.element.kind]}>{el.element.label}</Tag>
       {isImage ? (
         <ImageTool src={el.imageSrc} onReplace={el.onReplaceImage} onUpload={el.onUploadImage} />
       ) : (
@@ -365,7 +365,7 @@ function ImageTool({
             try {
               onReplace(await onUpload(file));
             } catch {
-              setError("Não deu para enviar essa imagem. Tente outra ou cole um link.");
+              setError("Não deu para enviar essa imagem. Tente outra Ou cole um link.");
             } finally {
               setBusy(false);
             }
@@ -379,7 +379,7 @@ function ImageTool({
           }}
         >
           <label className="ae-label block" htmlFor="ae-image-url">
-            ou cole um link
+            Ou cole um link
           </label>
           <div className="flex gap-2">
             <input

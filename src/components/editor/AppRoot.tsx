@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { isSupabaseEnabled } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth";
 import { EditorShell } from "./EditorShell";

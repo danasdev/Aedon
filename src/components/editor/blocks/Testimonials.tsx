@@ -9,7 +9,7 @@ export function TestimonialsCards({ props }: P) {
   const items = list(props, "items");
   return (
     <section
-      className="py-16 sm:py-24 border-t border-white/5"
+      className="py-16 sm:py-24 border-t border-[color:var(--tc-10)]"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -23,7 +23,7 @@ export function TestimonialsCards({ props }: P) {
           {items.map((it) => (
             <figure
               key={it._id}
-              className="p-6 sm:p-8 rounded-2xl border border-white/10 bg-white/[0.02]"
+              className="p-6 sm:p-8 rounded-2xl border border-[color:var(--tc-15)] bg-[color:var(--tc-5)]"
             >
               <blockquote className="text-[color:var(--tc-90)] text-base sm:text-lg leading-relaxed">
                 &ldquo;{it.quote}&rdquo;

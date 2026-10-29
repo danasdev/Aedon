@@ -9,7 +9,7 @@ export function FooterDark({ props }: P) {
   const links = list(props, "links");
   return (
     <footer
-      className="border-t border-white/10 py-10 sm:py-14"
+      className="border-t border-[color:var(--tc-15)] py-10 sm:py-14"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -43,7 +43,7 @@ export function FooterMinimal({ props }: P) {
   const textColor = str(props, "textColor", "#FFFFFF");
   return (
     <footer
-      className="border-t border-white/5 py-8"
+      className="border-t border-[color:var(--tc-10)] py-8"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center text-[color:var(--tc-40)] text-xs">

@@ -27,7 +27,7 @@ import {
   Pencil,
   Plus,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons";
 import { PanelShell } from "./PanelShell";
 
 interface Props {
@@ -76,7 +76,7 @@ export function PagesPanel({
       }
     >
       <p className="ae-label px-4 pb-2">
-        // {pages.length} {pages.length === 1 ? "página" : "páginas"} · a primeira é a inicial
+        {pages.length} {pages.length === 1 ? "página" : "páginas"} · a primeira é a inicial
       </p>
       <ul className="space-y-0.5 px-2">
         {pages.map((p, i) => {
@@ -123,9 +123,7 @@ export function PagesPanel({
                 <span className={`truncate text-sm ${active ? "font-semibold" : "font-medium"}`}>
                   {p.name}
                 </span>
-                {i === 0 && (
-                  <span className="ml-auto font-mono text-[10px] text-faint">inicial</span>
-                )}
+                {i === 0 && <span className="ml-auto text-xs text-faint">Inicial</span>}
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -10,7 +10,7 @@ export function FAQAccordion({ props }: P) {
   const items = list(props, "items");
   return (
     <section
-      className="py-16 sm:py-24 border-t border-white/5"
+      className="py-16 sm:py-24 border-t border-[color:var(--tc-10)]"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -24,7 +24,7 @@ export function FAQAccordion({ props }: P) {
           {items.map((it) => (
             <details
               key={it._id}
-              className="group rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-5"
+              className="group rounded-xl border border-[color:var(--tc-15)] bg-[color:var(--tc-5)] p-4 sm:p-5"
             >
               <summary className="cursor-pointer list-none flex items-center justify-between gap-4 text-[color:var(--tc)] font-medium">
                 <span className="min-w-0">{it.q}</span>

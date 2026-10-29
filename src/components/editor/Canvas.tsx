@@ -22,7 +22,7 @@ import { LinkProvider, type LinkResolver } from "./blocks/_link";
 import { CustomElements } from "./blocks/CustomElements";
 import { DeviceFrame } from "./DeviceFrame";
 import { ElementSelection } from "./ElementSelection";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "@/components/icons";
 
 interface Props {
   device: Device;
@@ -371,10 +371,10 @@ function InsertGap({
           event.stopPropagation();
           onInsert(index);
         }}
-        className={`absolute left-1/2 top-0 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-[#3ccfe0] px-4 text-[13px] font-bold text-[#0a0a0a] shadow-[0_3px_0_#1a8a99] transition-opacity ${
+        className={`absolute left-1/2 top-0 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-[#3ccfe0] px-4 text-[13px] font-semibold text-[#0a0a0a] shadow-[0_3px_0_#1a8a99] transition-opacity ${
           active ? "opacity-100" : "opacity-0 group-hover/gap:opacity-100 focus-visible:opacity-100"
         }`}
-        style={{ fontFamily: "Inter, sans-serif" }}
+        style={{ fontFamily: "Geist, Inter, sans-serif" }}
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={2.6} /> Adicionar seção
       </button>
@@ -591,10 +591,10 @@ export function Canvas({
                   >
                     {active && !selectedElement && (
                       <span
-                        className="absolute left-2 top-2 rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-[11px] font-bold leading-none text-[#0a0a0a]"
-                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        className="absolute left-2 top-2 rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-xs font-semibold leading-none text-[#0a0a0a]"
+                        style={{ fontFamily: "Geist, Inter, sans-serif" }}
                       >
-                        seção · {name.toLowerCase()}
+                        {name}
                       </span>
                     )}
                   </div>
@@ -620,7 +620,10 @@ export function Canvas({
   const showEmpty = editing && !!emptyState && visible.length === 0 && !dragging;
 
   return (
-    <div className="relative min-w-0 flex-1 bg-[radial-gradient(120%_80%_at_50%_0%,var(--panel),var(--void))]">
+    <div
+      data-tour="canvas"
+      className="relative min-w-0 flex-1 bg-[radial-gradient(120%_80%_at_50%_0%,var(--panel),var(--void))]"
+    >
       <main
         ref={mainRef}
         className="absolute inset-0 overflow-auto scrollbar-thin"
@@ -662,7 +665,9 @@ export function Canvas({
 
       {editing && toolbar && (
         <div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
-          <div className="pointer-events-auto max-w-full">{toolbar}</div>
+          <div data-tour="toolbar" className="pointer-events-auto max-w-full">
+            {toolbar}
+          </div>
         </div>
       )}
 
@@ -670,7 +675,7 @@ export function Canvas({
         <div
           role="group"
           aria-label="Zoom do canvas"
-          className="absolute bottom-4 right-4 z-30 flex h-9 items-center gap-0.5 rounded-full border border-border bg-surface px-1 font-mono text-[11px] text-muted-foreground"
+          className="absolute bottom-4 right-4 z-30 flex h-9 items-center gap-0.5 rounded-full border border-border bg-surface px-1 text-xs text-muted-foreground"
         >
           <button
             type="button"
@@ -684,7 +689,7 @@ export function Canvas({
             type="button"
             onClick={() => setZoom("fit")}
             title="Ajustar à tela"
-            className={`min-w-12 rounded-full px-1 tabular-nums ${zoom === "fit" ? "text-foreground" : "hover:text-foreground"}`}
+            className={`h-7 min-w-12 rounded-full px-1 tabular-nums ${zoom === "fit" ? "text-foreground" : "hover:text-foreground"}`}
           >
             {Math.round(scale * 100)}%
           </button>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Typography } from "@/lib/editor/types";
-import { PaintBucket } from "lucide-react";
+import { PaintBucket } from "@/components/icons";
 import { TypographyPanel } from "../TypographyPanel";
 import { PanelShell } from "./PanelShell";
 
@@ -29,7 +29,7 @@ export function StylePanel({
         Vale para todas as páginas. Cada seção ainda pode ter a própria cor.
       </p>
 
-      <p className="ae-label px-4 pb-2 pt-5">// cores</p>
+      <p className="ae-label px-4 pb-2 pt-5">Cores</p>
       <div className="px-4">
         <button
           type="button"
@@ -51,7 +51,7 @@ export function StylePanel({
         </p>
       </div>
 
-      <p className="ae-label px-4 pb-1 pt-5">// fontes e texto</p>
+      <p className="ae-label px-4 pb-1 pt-5">Fontes e texto</p>
       <TypographyPanel typography={typography} onChange={onTypographyChange} />
     </PanelShell>
   );

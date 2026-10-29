@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { signInWithPassword, signUpWithPassword } from "@/lib/supabase/auth";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { AedonLogo } from "./AedonMark";
 
 export function AuthScreen() {
@@ -37,7 +37,7 @@ export function AuthScreen() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-start">
           <AedonLogo />
-          <p className="ae-eyebrow mt-8">{mode === "login" ? "// entrar" : "// nova conta"}</p>
+          <p className="ae-eyebrow mt-8">{mode === "login" ? "Entrar" : "Nova conta"}</p>
           <h1 className="ae-display mt-2 text-3xl">
             {mode === "login" ? "Seus sites" : "Crie sua conta"}
           </h1>

@@ -147,12 +147,12 @@ export function ElementSelection({
       onClick={(event) => event.stopPropagation()}
     >
       <span
-        className={`absolute left-[-2px] rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-[11px] font-bold leading-none text-[#0a0a0a] ${
+        className={`absolute left-[-2px] rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-xs font-semibold leading-none text-[#0a0a0a] ${
           tagBelow ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]"
         }`}
-        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        style={{ fontFamily: "Geist, Inter, sans-serif" }}
       >
-        {element.label.toLowerCase()}
+        {element.label}
       </span>
       {handles.map(({ name, style }) => (
         <button

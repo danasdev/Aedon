@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutTemplate, MousePointerClick, CloudUpload, Code2, ArrowRight } from "lucide-react";
+import { LayoutTemplate, MousePointerClick, CloudUpload, Code2, ArrowRight } from "@/components/icons";
 import { AedonLogo } from "@/components/editor/AedonMark";
 import { BASE_PLAN, FEATURES, formatBRL } from "@/lib/pricing/catalog";
 
@@ -62,7 +62,7 @@ export function Landing() {
         />
         <div className="relative max-w-2xl">
           <p className="animate-in fade-in slide-in-from-bottom-2 duration-500 ae-eyebrow mb-5">
-            // construtor visual de sites
+            Construtor visual de sites
           </p>
           <h1 className="animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100 fill-mode-both ae-display text-4xl sm:text-[56px]">
             Monte um site inteiro combinando seções, sem escrever código.
@@ -98,7 +98,7 @@ export function Landing() {
           {STEPS.map((step) => (
             <div key={step.title} className="group">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-xs font-mono text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {String(STEPS.indexOf(step) + 1).padStart(2, "0")}
                 </span>
                 <div className="w-8 h-8 rounded-lg border border-border flex items-center justify-center transition-colors duration-200 group-hover:border-ion/60 group-hover:bg-ion/10">
@@ -167,7 +167,7 @@ export function Landing() {
             {extraFeatures.map((f) => (
               <li key={f.key} className="flex items-center justify-between gap-6">
                 <span>{f.label}</span>
-                <span className="font-mono text-xs">+{formatBRL(f.unitPriceCents)}</span>
+                <span className="text-xs">+{formatBRL(f.unitPriceCents)}</span>
               </li>
             ))}
           </ul>

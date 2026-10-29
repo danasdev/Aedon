@@ -20,6 +20,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ChevronDown,
+  HelpCircle,
   Download,
   Eye,
   LayoutGrid,
@@ -31,7 +32,7 @@ import {
   Tablet,
   Undo2,
   Wallet,
-} from "lucide-react";
+} from "@/components/icons";
 import { AedonMark } from "./AedonMark";
 import { PricingPanel } from "./PricingPanel";
 
@@ -51,14 +52,15 @@ interface Props {
   email: string | null;
   syncStatus: SyncStatus;
   onSignOut?: () => void;
+  onOpenTour: () => void;
 }
 
 const SYNC: Record<SyncStatus, { label: string; dot: string }> = {
-  idle: { label: "salvo neste navegador", dot: "bg-[#4cd08a]" },
-  loading: { label: "carregando", dot: "bg-grain animate-pulse" },
-  saving: { label: "salvando", dot: "bg-grain animate-pulse" },
-  saved: { label: "salvo", dot: "bg-[#4cd08a]" },
-  error: { label: "erro ao salvar", dot: "bg-destructive" },
+  idle: { label: "Salvo neste navegador", dot: "bg-[#4cd08a]" },
+  loading: { label: "Carregando", dot: "bg-grain animate-pulse" },
+  saving: { label: "Salvando", dot: "bg-grain animate-pulse" },
+  saved: { label: "Salvo", dot: "bg-[#4cd08a]" },
+  error: { label: "Erro ao salvar", dot: "bg-destructive" },
 };
 
 const DEVICES: { id: Device; label: string; Icon: typeof Monitor }[] = [
@@ -117,7 +119,7 @@ export function EditorTopBar(props: Props) {
                 {props.email !== null && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="truncate font-mono text-[11px] font-normal text-faint">
+                    <DropdownMenuLabel className="truncate text-xs font-normal text-faint">
                       {props.email}
                     </DropdownMenuLabel>
                     {props.onSignOut && (
@@ -130,10 +132,7 @@ export function EditorTopBar(props: Props) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <span
-            className="hidden items-center gap-1.5 font-mono text-[10.5px] text-faint lg:flex"
-            role="status"
-          >
+          <span className="hidden items-center gap-1.5 text-xs text-faint lg:flex" role="status">
             <span className={`h-1.5 w-1.5 rounded-full ${sync.dot}`} />
             {sync.label}
           </span>
@@ -179,31 +178,43 @@ export function EditorTopBar(props: Props) {
                   <Redo2 className="h-4 w-4" />
                 </button>
               </Tip>
+              <Tip label="Ver o tutorial">
+                <button
+                  type="button"
+                  onClick={props.onOpenTour}
+                  className="ae-ib"
+                  aria-label="Ver o tutorial"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </Tip>
               <span className="mx-1 h-[22px] w-px bg-border" />
             </>
           )}
-          <button
-            type="button"
-            onClick={props.onTogglePreview}
-            aria-pressed={props.previewMode}
-            className={`ae-btn ${props.previewMode ? "border-ion text-ion" : ""}`}
-          >
-            {props.previewMode ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            <span className="hidden sm:inline">
-              {props.previewMode ? "Voltar a editar" : "Prévia"}
-            </span>
-          </button>
-          <button type="button" onClick={props.onExport} className="ae-btn ae-btn-primary">
-            <Download className="h-4 w-4" strokeWidth={2.2} />
-            <span className="hidden sm:inline">Exportar</span>
-          </button>
+          <span data-tour="publish" className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={props.onTogglePreview}
+              aria-pressed={props.previewMode}
+              className={`ae-btn ${props.previewMode ? "border-ion text-ion" : ""}`}
+            >
+              {props.previewMode ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <span className="hidden sm:inline">
+                {props.previewMode ? "Voltar a editar" : "Prévia"}
+              </span>
+            </button>
+            <button type="button" onClick={props.onExport} className="ae-btn ae-btn-primary">
+              <Download className="h-4 w-4" strokeWidth={2.2} />
+              <span className="hidden sm:inline">Exportar</span>
+            </button>
+          </span>
         </div>
       </header>
 
       <Dialog open={budgetOpen} onOpenChange={setBudgetOpen}>
         <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto border-border bg-panel p-0">
           <DialogHeader className="border-b border-border px-5 py-4">
-            <p className="ae-eyebrow">// orçamento</p>
+            <p className="ae-eyebrow">Orçamento</p>
             <DialogTitle className="ae-title text-base">Orçamento do projeto</DialogTitle>
             <DialogDescription className="text-xs">
               Calculado pelas seções e recursos do site.
@@ -230,7 +241,7 @@ function Tip({
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent side="bottom">
         {label}
-        {shortcut && <kbd className="ml-2 font-mono text-[10px] opacity-60">{shortcut}</kbd>}
+        {shortcut && <kbd className="ml-2 font-mono text-xs opacity-60">{shortcut}</kbd>}
       </TooltipContent>
     </Tooltip>
   );

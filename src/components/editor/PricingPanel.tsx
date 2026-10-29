@@ -1,7 +1,7 @@
 import type { ProjectState } from "@/lib/editor/types";
 import { BASE_PLAN, FEATURES, formatBRL } from "@/lib/pricing/catalog";
 import { calculatePrice, computeUsage } from "@/lib/pricing/calc";
-import { Gauge, Sparkles } from "lucide-react";
+import { Gauge, Sparkles } from "@/components/icons";
 
 interface Props {
   project: ProjectState;
@@ -20,7 +20,7 @@ export function PricingPanel({ project, onToggleAddon }: Props) {
     <div className="p-4 space-y-6">
       {/* Plan */}
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">
           {BASE_PLAN.name}
         </div>
         <div className="text-sm font-semibold mt-0.5">{formatBRL(BASE_PLAN.priceCents)}/mês</div>
@@ -30,7 +30,7 @@ export function PricingPanel({ project, onToggleAddon }: Props) {
 
       {/* Auto-detected usage */}
       <div className="space-y-2.5">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground">
           <Gauge className="w-3 h-3" />
           Uso do projeto (automático)
         </div>
@@ -53,7 +53,7 @@ export function PricingPanel({ project, onToggleAddon }: Props) {
             ))}
           </div>
         ) : (
-          <div className="text-[11px] text-muted-foreground/70">
+          <div className="text-xs text-muted-foreground/70">
             Dentro do plano base — nenhuma cobrança extra por uso.
           </div>
         )}
@@ -63,7 +63,7 @@ export function PricingPanel({ project, onToggleAddon }: Props) {
 
       {/* Manual add-ons */}
       <div className="space-y-2.5">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground">
           <Sparkles className="w-3 h-3" />
           Recursos adicionais
         </div>
@@ -78,10 +78,10 @@ export function PricingPanel({ project, onToggleAddon }: Props) {
               >
                 <div className="min-w-0">
                   <div className="text-xs font-medium text-foreground">{f.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{f.description}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{f.description}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[11px] font-mono text-white/70">
+                  <span className="text-xs text-white/70">
                     +{formatBRL(f.unitPriceCents)}
                   </span>
                   <span
@@ -118,7 +118,7 @@ function UsageStat({ label, value, over }: { label: string; value: string; over:
     <div
       className={`rounded-lg border px-2.5 py-2 ${over ? "border-foreground/25 bg-foreground/5" : "border-white/10 bg-white/[0.02]"}`}
     >
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-sm font-medium text-foreground mt-0.5">{value}</div>
     </div>
   );
@@ -129,9 +129,9 @@ function PriceRow({ label, detail, cents }: { label: string; detail: string; cen
     <div className="flex items-center justify-between text-xs">
       <div className="min-w-0">
         <div className="text-foreground">{label}</div>
-        <div className="text-[10px] text-muted-foreground">{detail}</div>
+        <div className="text-xs text-muted-foreground">{detail}</div>
       </div>
-      <div className="font-mono text-white/80 shrink-0">+{formatBRL(cents)}</div>
+      <div className="text-white/80 shrink-0">+{formatBRL(cents)}</div>
     </div>
   );
 }

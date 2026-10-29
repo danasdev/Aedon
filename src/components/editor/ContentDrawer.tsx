@@ -40,7 +40,7 @@ import {
   SlidersHorizontal,
   X,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons";
 
 const KIND_ICON: Record<SectionVariant["kind"], LucideIcon> = {
   navbar: PanelTop,
@@ -110,7 +110,7 @@ export function ContentDrawer(props: Props) {
       >
         <div className="flex h-[58px] shrink-0 items-center justify-between gap-3 border-b border-border px-4">
           <div className="min-w-0">
-            <p className="ae-eyebrow">// conteúdo</p>
+            <p className="ae-eyebrow">Conteúdo</p>
             <h2 className="ae-title mt-0.5 truncate">{variant.name}</h2>
           </div>
           <button type="button" onClick={onClose} className="ae-ib h-8 w-8" aria-label="Fechar conteúdo">
@@ -296,7 +296,7 @@ function SectionFields({
 
   return (
     <div className="p-4 space-y-5">
-      <p className="ae-label">// textos, imagens e links</p>
+      <p className="ae-label">Textos, imagens e links</p>
 
       <div className="space-y-4">
         {groups.map(({ field: f, children }) => {
@@ -315,11 +315,11 @@ function SectionFields({
         })}
       </div>
 
-      <p className="ae-label border-t border-border pt-5">// aparência</p>
+      <p className="ae-label border-t border-border pt-5">Aparência</p>
 
       {colorFields.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
             Cores
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -380,9 +380,9 @@ function ColorSwatchField({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-[10px] font-mono bg-input/40 border border-border rounded px-1 py-0.5 text-center outline-none focus:border-foreground/40 transition-all"
+        className="w-full text-xs bg-input/40 border border-border rounded px-1 py-0.5 text-center outline-none focus:border-foreground/40 transition-all"
       />
-      <span className="text-[10px] text-muted-foreground text-center leading-tight truncate w-full">
+      <span className="text-xs text-muted-foreground text-center leading-tight truncate w-full">
         {shortColorLabel(f.label)}
       </span>
     </div>
@@ -412,7 +412,7 @@ function VisualEffectsPanel({
       >
         <span>
           <span className="block text-xs font-medium text-foreground">Fundo e movimento</span>
-          <span className="mt-0.5 block text-[10px] text-muted-foreground">Gradiente, entrada e comportamento no scroll</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">Gradiente, entrada e comportamento no scroll</span>
         </span>
         <span className="text-xs text-muted-foreground">{open ? "−" : "+"}</span>
       </button>
@@ -430,7 +430,7 @@ function VisualEffectsPanel({
           </button>
           {gradientEnabled && (
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-[10px] text-muted-foreground">
+              <label className="text-xs text-muted-foreground">
                 Início
                 <input
                   type="color"
@@ -439,7 +439,7 @@ function VisualEffectsPanel({
                   className="mt-1 h-9 w-full cursor-pointer rounded-lg border border-border bg-transparent p-0.5"
                 />
               </label>
-              <label className="text-[10px] text-muted-foreground">
+              <label className="text-xs text-muted-foreground">
                 Fim
                 <input
                   type="color"
@@ -448,7 +448,7 @@ function VisualEffectsPanel({
                   className="mt-1 h-9 w-full cursor-pointer rounded-lg border border-border bg-transparent p-0.5"
                 />
               </label>
-              <label className="col-span-2 text-[10px] text-muted-foreground">
+              <label className="col-span-2 text-xs text-muted-foreground">
                 Direção do gradiente
                 <select
                   value={str(instance.props, "gradientDirection", "135deg")}
@@ -464,7 +464,7 @@ function VisualEffectsPanel({
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[10px] text-muted-foreground">
+            <label className="text-xs text-muted-foreground">
               Animação de entrada
               <select
                 value={str(instance.props, "entryAnimation", "none")}
@@ -478,7 +478,7 @@ function VisualEffectsPanel({
                 <option value="zoom">Zoom sutil</option>
               </select>
             </label>
-            <label className="text-[10px] text-muted-foreground">
+            <label className="text-xs text-muted-foreground">
               Efeito ao rolar
               <select
                 value={str(instance.props, "scrollEffect", "none")}
@@ -532,7 +532,7 @@ function ScalarField({
   const val = str(instance.props, f.key);
   return (
     <div>
-      <label className="text-[11px] text-muted-foreground font-medium mb-1.5 block">
+      <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
         {f.label}
       </label>
       <FieldInput
@@ -602,7 +602,7 @@ function FieldInput({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`${base} font-mono`}
+          className={`${base}`}
         />
       </div>
     );
@@ -644,10 +644,10 @@ function PhotoGridField({
     <div>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <label className="text-[11px] text-muted-foreground font-medium">{f.label}</label>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/70">Arraste uma foto pelo ícone para alterar a posição no grid.</p>
+          <label className="text-xs text-muted-foreground font-medium">{f.label}</label>
+          <p className="mt-0.5 text-xs text-muted-foreground/70">Arraste uma foto pelo ícone para alterar a posição no grid.</p>
         </div>
-        <span className="text-[10px] text-muted-foreground/70">{items.length}{f.max ? `/${f.max}` : ""}</span>
+        <span className="text-xs text-muted-foreground/70">{items.length}{f.max ? `/${f.max}` : ""}</span>
       </div>
       <div className="grid grid-cols-1 gap-3">
         {items.map((item, index) => (
@@ -665,7 +665,7 @@ function PhotoGridField({
             }`}
           >
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Foto {index + 1}</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground/70">Foto {index + 1}</span>
               <div className="flex items-center gap-1">
                 <span
                   draggable
@@ -733,8 +733,8 @@ function ListField({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-[11px] text-muted-foreground font-medium">{f.label}</label>
-        <span className="text-[10px] text-muted-foreground/70">
+        <label className="text-xs text-muted-foreground font-medium">{f.label}</label>
+        <span className="text-xs text-muted-foreground/70">
           {items.length}
           {f.max ? `/${f.max}` : ""}
         </span>
@@ -746,7 +746,7 @@ function ListField({
             className="rounded-lg border border-white/10 bg-black/30 p-2.5 space-y-2"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground/70">
                 {f.itemLabel ?? "Item"} {i + 1}
               </span>
               <div className="flex items-center gap-0.5">
@@ -772,7 +772,7 @@ function ListField({
             {itemSchema.map((sf) => (
               <div key={sf.key}>
                 {itemSchema.length > 1 && (
-                  <label className="text-[10px] text-muted-foreground/80 mb-1 block">
+                  <label className="text-xs text-muted-foreground/80 mb-1 block">
                     {sf.label}
                   </label>
                 )}
@@ -964,8 +964,8 @@ function FocalImageInput({
           onChange={(e) => void selectFile(e.target.files?.[0])}
         />
       </div>
-      <p className="text-[10px] text-muted-foreground">Envie uma imagem do dispositivo ou cole uma URL. Até 5 MB na nuvem e 1,5 MB no modo local.</p>
-      {uploadError && <p className="text-[10px] text-destructive">{uploadError}</p>}
+      <p className="text-xs text-muted-foreground">Envie uma imagem do dispositivo ou cole uma URL. Até 5 MB na nuvem e 1,5 MB no modo local.</p>
+      {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
       {img.src && (
         <>
           <div
@@ -995,7 +995,7 @@ function FocalImageInput({
               <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-foreground" />
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Crosshair className="w-3 h-3" />
             Arraste para definir o ponto focal · {Math.round(img.fx)}% {Math.round(img.fy)}%
           </div>

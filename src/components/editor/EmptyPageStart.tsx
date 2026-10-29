@@ -1,6 +1,6 @@
 import { getVariant } from "@/lib/editor/sections";
 import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/icons";
 import { VariantPreview } from "./VariantPreview";
 
 /** Shown instead of the page frame while a page has no sections: pick a starting point. */
@@ -13,7 +13,7 @@ export function EmptyPageStart({
 }) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-start px-2 pb-10 pt-8">
-      <p className="ae-eyebrow">// página vazia</p>
+      <p className="ae-eyebrow">Página vazia</p>
       <h2 className="ae-display mt-3 text-[34px]">Por onde quer começar?</h2>
       <p className="mt-2 text-sm text-muted-foreground">
         Escolha uma página pronta e edite tudo depois, ou monte bloco por bloco.
@@ -48,8 +48,8 @@ export function EmptyPageStart({
               </div>
             </div>
             <p className="mt-2 text-sm font-semibold">{preset.name}</p>
-            <p className="line-clamp-1 font-mono text-[10.5px] text-faint">
-              {preset.sectionIds.length} blocos · {preset.description.toLowerCase()}
+            <p className="line-clamp-1 text-xs text-faint">
+              {preset.sectionIds.length} blocos · {preset.description}
             </p>
           </div>
         ))}

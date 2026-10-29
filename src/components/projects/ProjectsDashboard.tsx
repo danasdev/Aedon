@@ -2,7 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, Copy, Loader2, LogOut, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Loader2,
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,13 +126,13 @@ function Dashboard({
                 <button
                   type="button"
                   aria-label="Conta"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-xs font-bold uppercase hover:border-ion"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-xs font-semibold uppercase hover:border-ion"
                 >
                   {userEmail.slice(0, 1)}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">
-                <DropdownMenuLabel className="truncate font-mono text-[11px] font-normal text-faint">
+                <DropdownMenuLabel className="truncate text-xs font-normal text-faint">
                   {userEmail}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -145,7 +154,7 @@ function Dashboard({
         <div className="mb-9 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="ae-eyebrow">
-              // {projects === null ? "carregando" : `${count} ${count === 1 ? "site" : "sites"}`}
+              {projects === null ? "Carregando" : `${count} ${count === 1 ? "site" : "sites"}`}
             </p>
             <h1 className="ae-display mt-3 text-4xl sm:text-[44px]">Seus sites</h1>
           </div>
@@ -164,7 +173,7 @@ function Dashboard({
           </div>
         ) : projects.length === 0 ? (
           <div className="ae-tile flex flex-col items-start gap-3 border-dashed p-10">
-            <p className="ae-eyebrow">// comece aqui</p>
+            <p className="ae-eyebrow">Comece aqui</p>
             <h2 className="ae-title text-xl">Crie seu primeiro site</h2>
             <p className="max-w-md text-sm text-muted-foreground">
               Escolha uma página pronta, troque textos e imagens clicando direto nelas e exporte
@@ -321,7 +330,7 @@ function ProjectCard({
         ) : (
           <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
             <span className="block truncate text-sm font-semibold">{project.name}</span>
-            <span className="block font-mono text-[10.5px] text-faint">
+            <span className="block text-xs text-faint">
               editado{" "}
               {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}
             </span>
@@ -408,7 +417,7 @@ function CreateSiteDialog({
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent className="max-h-[90vh] max-w-[880px] overflow-y-auto border-border bg-panel p-7 sm:rounded-2xl">
-        <p className="ae-eyebrow">// novo site</p>
+        <p className="ae-eyebrow">Novo site</p>
         <DialogTitle className="ae-display text-[28px]">Criar um site</DialogTitle>
         <DialogDescription className="-mt-2 text-sm">
           Você pode mudar tudo depois.
@@ -423,7 +432,7 @@ function CreateSiteDialog({
         >
           <div className="max-w-md space-y-2">
             <label htmlFor="new-site-name" className="ae-label block">
-              nome do site
+              Nome do site
             </label>
             <input
               id="new-site-name"
@@ -433,12 +442,15 @@ function CreateSiteDialog({
                 setName(e.target.value);
                 setError(null);
               }}
+              onBlur={() => !name.trim() && setError("Dê um nome ao site.")}
+              aria-invalid={!!error}
+              aria-describedby={error ? "new-site-error" : undefined}
               className="ae-input"
             />
           </div>
 
           <div role="radiogroup" aria-label="Ponto de partida">
-            <p className="ae-label mb-2.5">ponto de partida</p>
+            <p className="ae-label mb-2.5">Ponto de partida</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {options.map((preset) => {
                 const selected = choice === preset.id;
@@ -489,16 +501,18 @@ function CreateSiteDialog({
                       </span>
                     )}
                     <p className="mt-2 text-[13px] font-semibold">{preset.name}</p>
-                    <p className="line-clamp-1 font-mono text-[10.5px] text-faint">
-                      {preset.description.toLowerCase()}
-                    </p>
+                    <p className="line-clamp-1 text-xs text-faint">{preset.description}</p>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p id="new-site-error" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
 
           <div className="flex justify-end gap-2">
             <button

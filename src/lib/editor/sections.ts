@@ -12,7 +12,11 @@ import { uuid } from "./id";
 import { NavbarModern, NavbarMinimal } from "@/components/editor/blocks/Navbar";
 import { HeroGradient, HeroSplit } from "@/components/editor/blocks/Hero";
 import { FeaturesGrid, FeaturesList } from "@/components/editor/blocks/Features";
-import { GalleryMasonry, GalleryEditorial, GalleryFilmstrip } from "@/components/editor/blocks/Gallery";
+import {
+  GalleryMasonry,
+  GalleryEditorial,
+  GalleryFilmstrip,
+} from "@/components/editor/blocks/Gallery";
 import { TextManifesto, TextEditorial, TextQuote } from "@/components/editor/blocks/Text";
 import { TestimonialsCards } from "@/components/editor/blocks/Testimonials";
 import { FAQAccordion } from "@/components/editor/blocks/FAQ";
@@ -41,13 +45,28 @@ const COLOR_FIELDS: FieldSchema[] = [
   { key: "textColor", label: "Cor do texto", type: "color" },
   { key: "accent", label: "Cor de destaque", type: "color" },
 ];
-const COLOR_DEFAULTS: PropMap = { bg: "#000000", textColor: "#FFFFFF", accent: "#D4D4D8" };
+/** Default palette for new blocks: paper, ink and a moss accent — calm and readable. */
+const PAPER = "#F6F3EC";
+const PAPER_DEEP = "#EFEADF";
+const INK = "#161512";
+const MOSS = "#1F4D3A";
+const COLOR_DEFAULTS: PropMap = { bg: PAPER, textColor: INK, accent: MOSS };
+
+/** A few blocks start on a deeper tone so a fresh page has rhythm instead of one flat colour. */
+const PALETTE_BY_VARIANT: Record<string, PropMap> = {
+  "features.grid": { bg: PAPER_DEEP },
+  "testimonials.cards": { bg: PAPER_DEEP },
+  "text.quote": { bg: PAPER_DEEP },
+  "gallery.filmstrip": { bg: PAPER_DEEP },
+  "cta.banner": { bg: MOSS, textColor: PAPER, accent: PAPER },
+  "footer.dark": { bg: INK, textColor: PAPER, accent: "#D8CFBD" },
+};
 
 function withColors(v: SectionVariant): SectionVariant {
   return {
     ...v,
     schema: [...v.schema, ...COLOR_FIELDS],
-    defaults: { ...COLOR_DEFAULTS, ...v.defaults },
+    defaults: { ...COLOR_DEFAULTS, ...PALETTE_BY_VARIANT[v.id], ...v.defaults },
   };
 }
 
@@ -397,7 +416,9 @@ const RAW: SectionVariant[] = [
         type: "list",
         itemLabel: "Foto",
         itemSchema: [{ key: "src", label: "Imagem", type: "image" }],
-        itemDefaults: { src: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1200" },
+        itemDefaults: {
+          src: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1200",
+        },
         min: 1,
         max: 8,
       },
@@ -425,7 +446,9 @@ const RAW: SectionVariant[] = [
         type: "list",
         itemLabel: "Foto",
         itemSchema: [{ key: "src", label: "Imagem", type: "image" }],
-        itemDefaults: { src: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=1200" },
+        itemDefaults: {
+          src: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=1200",
+        },
         min: 1,
         max: 10,
       },
@@ -592,7 +615,12 @@ const CATEGORY_BY_KIND: Record<SectionKind, LibraryCategory> = {
 export const CATEGORY_ORDER: LibraryCategory[] = ["Header", "Hero", "Corpo", "Conversão", "Footer"];
 
 /** Variants flagged as premium (shown with a badge; access gating is server-side, #7). */
-const PREMIUM_IDS = new Set<string>(["hero.split", "gallery.masonry", "gallery.editorial", "footer.dark"]);
+const PREMIUM_IDS = new Set<string>([
+  "hero.split",
+  "gallery.masonry",
+  "gallery.editorial",
+  "footer.dark",
+]);
 
 export const VARIANTS: SectionVariant[] = RAW.map((v) =>
   withColors({

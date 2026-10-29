@@ -9,26 +9,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Image, Minus, Search, Square, SquareDashed, Type, X, type LucideIcon } from "lucide-react";
+import {
+  Image,
+  Minus,
+  Search,
+  Square,
+  SquareDashed,
+  Type,
+  X,
+  type LucideIcon,
+} from "@/components/icons";
 import { VariantPreview } from "../VariantPreview";
 import { PanelShell } from "./PanelShell";
 
 export type NewElement = "text" | "button" | "image" | "divider" | "box";
 
 const CATEGORY_LABEL: Record<LibraryCategory, string> = {
-  Header: "menu",
-  Hero: "destaque",
-  Corpo: "conteúdo",
-  Conversão: "contato",
-  Footer: "rodapé",
+  Header: "Menu",
+  Hero: "Destaque",
+  Corpo: "Conteúdo",
+  Conversão: "Contato",
+  Footer: "Rodapé",
 };
 
 const ELEMENTS: { type: NewElement; label: string; Icon: LucideIcon }[] = [
-  { type: "text", label: "texto", Icon: Type },
-  { type: "button", label: "botão", Icon: Square },
-  { type: "image", label: "imagem", Icon: Image },
-  { type: "divider", label: "divisor", Icon: Minus },
-  { type: "box", label: "caixa", Icon: SquareDashed },
+  { type: "text", label: "Texto", Icon: Type },
+  { type: "button", label: "Botão", Icon: Square },
+  { type: "image", label: "Imagem", Icon: Image },
+  { type: "divider", label: "Divisor", Icon: Minus },
+  { type: "box", label: "Caixa", Icon: SquareDashed },
 ];
 
 interface Props {
@@ -113,7 +122,7 @@ export function AddPanel(props: Props) {
           aria-pressed={category === null}
           onClick={() => setCategory(null)}
         >
-          todos
+          Todos
         </button>
         {CATEGORY_ORDER.map((c) => (
           <button
@@ -130,7 +139,7 @@ export function AddPanel(props: Props) {
 
       {!q && !category && (
         <>
-          <p className="ae-label px-4 pb-2 pt-5">// elementos</p>
+          <p className="ae-label px-4 pb-2 pt-5">Elementos</p>
           <div className="grid grid-cols-5 gap-1.5 px-4">
             {ELEMENTS.map(({ type, label, Icon }) => (
               <button
@@ -146,14 +155,14 @@ export function AddPanel(props: Props) {
                 className="ae-tile flex h-16 flex-col items-center justify-center gap-1.5 text-foreground disabled:opacity-40"
               >
                 <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                <span className="font-mono text-[10px] text-faint">{label}</span>
+                <span className="text-xs text-faint">{label}</span>
               </button>
             ))}
           </div>
         </>
       )}
 
-      <p className="ae-label px-4 pb-2 pt-5">// seções{q ? ` · ${items.length}` : ""}</p>
+      <p className="ae-label px-4 pb-2 pt-5">Seções{q ? ` · ${items.length}` : ""}</p>
       {items.length === 0 ? (
         <p className="px-4 py-6 text-center text-xs text-muted-foreground">
           Nada encontrado para “{query}”.
@@ -182,10 +191,8 @@ export function AddPanel(props: Props) {
                   <VariantPreview variantId={v.id} defaults={v.defaults} height={72} />
                 </div>
               </div>
-              <p className="mt-1.5 truncate text-xs font-semibold text-foreground">{v.name}</p>
-              <p className="font-mono text-[10px] text-faint">
-                {v.category ? CATEGORY_LABEL[v.category] : ""}
-              </p>
+              <p className="mt-1.5 truncate text-sm font-medium text-foreground">{v.name}</p>
+              <p className="text-xs text-faint">{v.category ? CATEGORY_LABEL[v.category] : ""}</p>
             </div>
           ))}
         </div>
@@ -193,7 +200,7 @@ export function AddPanel(props: Props) {
 
       {!q && !category && (
         <>
-          <p className="ae-label px-4 pb-2 pt-6">// páginas prontas</p>
+          <p className="ae-label px-4 pb-2 pt-6">Páginas prontas</p>
           <div className="grid grid-cols-2 gap-3 px-4 pb-6">
             {PAGE_PRESETS.map((preset) => (
               <DropdownMenu key={preset.id}>
@@ -218,12 +225,10 @@ export function AddPanel(props: Props) {
                         ))}
                       </div>
                     </div>
-                    <p className="mt-1.5 truncate text-xs font-semibold text-foreground">
+                    <p className="mt-1.5 truncate text-sm font-medium text-foreground">
                       {preset.name}
                     </p>
-                    <p className="font-mono text-[10px] text-faint">
-                      {preset.sectionIds.length} blocos
-                    </p>
+                    <p className="text-xs text-faint">{preset.sectionIds.length} blocos</p>
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">

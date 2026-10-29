@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PanelLeftClose } from "lucide-react";
+import { PanelLeftClose } from "@/components/icons";
 
 /** Frame shared by the left panels: title row, close, scrolling body. Overlay on narrow screens. */
 export function PanelShell({

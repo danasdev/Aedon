@@ -10,7 +10,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { getVariant } from "@/lib/editor/sections";
 import type { SectionInstance } from "@/lib/editor/types";
-import { Copy, Eye, EyeOff, GripVertical, Trash2 } from "lucide-react";
+import { Copy, Eye, EyeOff, GripVertical, Trash2 } from "@/components/icons";
 import { PanelShell } from "./PanelShell";
 
 interface Props {
@@ -34,7 +34,7 @@ export function LayersPanel(props: Props) {
   return (
     <PanelShell title="Camadas" onClose={props.onClose} overlay={props.overlay}>
       <p className="ae-label px-4 pb-2">
-        // {props.sections.length} {props.sections.length === 1 ? "seção" : "seções"} · arraste para
+        {props.sections.length} {props.sections.length === 1 ? "seção" : "seções"} · arraste para
         ordenar
       </p>
       {props.sections.length === 0 ? (

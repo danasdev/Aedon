@@ -26,7 +26,7 @@ import { useCanvasDrag } from "@/hooks/use-canvas-drag";
 import { useCloudSync } from "@/lib/supabase/sync";
 import { uploadProjectImage } from "@/lib/supabase/image-upload";
 import { signOut } from "@/lib/supabase/auth";
-import { FileText, GripVertical, Layers, Palette, Plus, type LucideIcon } from "lucide-react";
+import { FileText, GripVertical, Layers, Palette, Plus, type LucideIcon } from "@/components/icons";
 import type { LinkResolver } from "./blocks/_link";
 import { Canvas } from "./Canvas";
 import { ContentDrawer } from "./ContentDrawer";
@@ -34,6 +34,10 @@ import { ContextToolbar } from "./ContextToolbar";
 import { EditorTopBar } from "./EditorTopBar";
 import { EmptyPageStart } from "./EmptyPageStart";
 import { FontLoader } from "./FontLoader";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { OnboardingTour } from "./OnboardingTour";
+import { shouldAutoStartTour } from "@/lib/editor/tour";
 import { AddPanel, type NewElement } from "./panels/AddPanel";
 import { LayersPanel } from "./panels/LayersPanel";
 import { PagesPanel } from "./panels/PagesPanel";
@@ -42,10 +46,10 @@ import { StylePanel } from "./panels/StylePanel";
 type Panel = "add" | "pages" | "layers" | "style";
 
 const RAIL: { id: Panel; label: string; Icon: LucideIcon }[] = [
-  { id: "add", label: "adicionar", Icon: Plus },
-  { id: "pages", label: "páginas", Icon: FileText },
-  { id: "layers", label: "camadas", Icon: Layers },
-  { id: "style", label: "estilo", Icon: Palette },
+  { id: "add", label: "Adicionar", Icon: Plus },
+  { id: "pages", label: "Páginas", Icon: FileText },
+  { id: "layers", label: "Camadas", Icon: Layers },
+  { id: "style", label: "Estilo", Icon: Palette },
 ];
 
 const NEW_ELEMENT_DEFAULTS: Record<NewElement, Record<string, string>> = {
@@ -118,6 +122,14 @@ export function EditorShell({
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [editRequest, setEditRequest] = useState(0);
   const [elementInfo, setElementInfo] = useState({ color: "#ffffff", src: "" });
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // First visit: a short guided tour. It can be replayed from the "?" in the top bar.
+  useEffect(() => {
+    if (!shouldAutoStartTour()) return;
+    const t = window.setTimeout(() => setTourOpen(true), 600);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const sections = store.activePage.sections;
   const selected = useMemo(
@@ -421,12 +433,19 @@ export function EditorShell({
             store.duplicateSection(selected.id);
           },
           onHide: () => store.toggleHidden(selected.id),
-          onRemove: () => store.removeSection(selected.id),
+          onRemove: () => removeSectionWithUndo(selected.id),
         }}
       />
     ) : (
       <ContextToolbar mode="none" hasSections={sections.length > 0} />
     );
+
+  // Deleting a section is instant but always reversible: say so, with the way back.
+  const removeSectionWithUndo = (id: string) => {
+    const name = getVariant(sections.find((s) => s.id === id)?.variantId ?? "")?.name ?? "Seção";
+    store.removeSection(id);
+    toast(`“${name}” foi excluída`, { action: { label: "Desfazer", onClick: () => store.undo() } });
+  };
 
   const togglePanel = (id: Panel) => {
     setPanel((current) => (current === id ? null : id));
@@ -455,6 +474,10 @@ export function EditorShell({
         email={user ? (user.email ?? "") : null}
         syncStatus={syncStatus}
         onSignOut={user ? () => void signOut() : undefined}
+        onOpenTour={() => {
+          setPreviewMode(false);
+          setTourOpen(true);
+        }}
       />
 
       <div className="relative flex min-h-0 flex-1">
@@ -467,9 +490,10 @@ export function EditorShell({
               <button
                 key={id}
                 type="button"
+                data-tour={id}
                 onClick={() => togglePanel(id)}
                 aria-pressed={panel === id}
-                className={`flex h-[60px] w-[68px] flex-col items-center justify-center gap-1.5 rounded-xl font-mono text-[9.5px] transition-colors ${
+                className={`flex h-[60px] w-[68px] flex-col items-center justify-center gap-1.5 rounded-xl text-xs transition-colors ${
                   panel === id
                     ? "bg-ion/10 text-ion shadow-[inset_0_0_0_1px_rgb(60_207_224/0.35)]"
                     : "text-faint hover:bg-surface hover:text-foreground"
@@ -524,7 +548,7 @@ export function EditorShell({
             onReorder={store.reorderSections}
             onToggleHidden={store.toggleHidden}
             onDuplicate={store.duplicateSection}
-            onRemove={store.removeSection}
+            onRemove={removeSectionWithUndo}
             onClose={() => setPanel(null)}
             overlay={isNarrow}
           />
@@ -600,6 +624,9 @@ export function EditorShell({
           />
         )}
       </div>
+
+      {tourOpen && <OnboardingTour onClose={() => setTourOpen(false)} />}
+      <Toaster position="bottom-center" />
 
       {canvasDrag.variantId && canvasDrag.point && (
         <div

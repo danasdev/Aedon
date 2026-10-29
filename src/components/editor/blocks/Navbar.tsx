@@ -1,5 +1,5 @@
 import type { PropMap } from "@/lib/editor/types";
-import { str, bool, list, headingStyle, SiteLink, textVars } from "./_shared";
+import { str, bool, list, headingStyle, SiteLink, textVars, accentButton } from "./_shared";
 
 type P = { props: PropMap };
 
@@ -10,7 +10,7 @@ export function NavbarModern({ props }: P) {
   const links = list(props, "links");
   return (
     <header
-      className="sticky top-0 z-10 backdrop-blur-xl border-b border-white/5"
+      className="sticky top-0 z-10 backdrop-blur-xl border-b border-[color:var(--tc-10)]"
       style={{ background: `color-mix(in oklab, ${bg} 70%, transparent)`, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
@@ -36,8 +36,8 @@ export function NavbarModern({ props }: P) {
         {bool(props, "showCta", true) && (
           <SiteLink
             link={str(props, "ctaLink")}
-            className="shrink-0 inline-flex items-center text-sm font-medium text-black px-3 sm:px-4 py-2 rounded-full transition-all cursor-pointer"
-            style={{ background: `linear-gradient(135deg, ${accent}88, ${accent})` }}
+            className="shrink-0 inline-flex items-center text-sm font-medium px-3 sm:px-4 py-2 rounded-full transition-transform hover:-translate-y-0.5 cursor-pointer"
+            style={accentButton(accent)}
           >
             {str(props, "ctaText")}
           </SiteLink>
@@ -51,7 +51,10 @@ export function NavbarMinimal({ props }: P) {
   const bg = str(props, "bg", "#000000");
   const textColor = str(props, "textColor", "#FFFFFF");
   return (
-    <header className="border-b border-white/5" style={{ background: bg, ...textVars(textColor) }}>
+    <header
+      className="border-b border-[color:var(--tc-10)]"
+      style={{ background: bg, ...textVars(textColor) }}
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="font-semibold text-[color:var(--tc)] truncate" style={headingStyle}>
           {str(props, "brand")}

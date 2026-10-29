@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { PropMap } from "@/lib/editor/types";
-import { str, list, headingStyle, textVars } from "./_shared";
+import { str, list, headingStyle, textVars, onColor } from "./_shared";
 
 type P = { props: PropMap };
 
@@ -39,7 +39,7 @@ export function FeaturesGrid({ props }: P) {
   const cols = COLS[str(props, "columns", "3")] ?? COLS["3"];
   return (
     <section
-      className="py-16 sm:py-24 border-t border-white/5"
+      className="py-16 sm:py-24 border-t border-[color:var(--tc-10)]"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -55,13 +55,13 @@ export function FeaturesGrid({ props }: P) {
             return (
               <div
                 key={it._id}
-                className="group p-6 sm:p-8 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent transition-all"
+                className="group p-6 sm:p-8 rounded-2xl border border-[color:var(--tc-15)] bg-[color:var(--tc-5)] transition-all"
               >
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-                  style={{ background: `linear-gradient(135deg, ${accent}55, ${accent})` }}
+                  style={{ background: accent, color: onColor(accent) }}
                 >
-                  <Icon className="w-5 h-5 text-black" />
+                  <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="font-semibold text-[color:var(--tc)] text-lg" style={headingStyle}>
                   {it.title}
@@ -83,7 +83,7 @@ export function FeaturesList({ props }: P) {
   const items = list(props, "items");
   return (
     <section
-      className="py-16 sm:py-24 border-t border-white/5"
+      className="py-16 sm:py-24 border-t border-[color:var(--tc-10)]"
       style={{ background: bg, ...textVars(textColor) }}
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -97,11 +97,11 @@ export function FeaturesList({ props }: P) {
           {items.map((it) => (
             <li
               key={it._id}
-              className="flex items-start gap-4 p-4 rounded-xl border border-white/5 bg-white/[0.02]"
+              className="flex items-start gap-4 p-4 rounded-xl border border-[color:var(--tc-10)] bg-[color:var(--tc-5)]"
             >
               <div
                 className="mt-1.5 w-2 h-2 rounded-full shrink-0"
-                style={{ background: accent, boxShadow: `0 0 12px ${accent}` }}
+                style={{ background: accent }}
               />
               <span className="text-[color:var(--tc-90)]">{it.text}</span>
             </li>
