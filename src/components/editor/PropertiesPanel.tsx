@@ -10,21 +10,18 @@ import type {
 import { str, bool, list } from "@/lib/editor/props";
 import { decodeLink, encodeLink, type LinkOptions } from "@/lib/editor/links";
 import { parseImage, encodeImage, objectPosition } from "@/lib/editor/images";
-import { elementLayout, encodeElementLayout, parseElementLayout, type EditableElement } from "@/lib/editor/layout";
-import { uuid } from "@/lib/editor/id";
+import { elementLayout, encodeElementLayout, parseElementLayout, type EditableElement, type ElementLayout } from "@/lib/editor/layout";
 import { TypographyPanel } from "./TypographyPanel";
 import { PricingPanel } from "./PricingPanel";
 import {
-  Settings2,
-  PanelRightClose,
-  PanelRight,
-  Type,
+  ArrowLeft,
+  Crosshair,
+  ChevronDown,
+  ChevronUp,
   Layers2,
   Plus,
   Trash2,
-  ChevronUp,
-  ChevronDown,
-  Crosshair,
+  Type,
   Wallet,
   PanelTop,
   Rocket,
@@ -38,6 +35,10 @@ import {
   ImagePlus,
   Loader2,
   GripVertical,
+  MousePointerClick,
+  RotateCcw,
+  SlidersHorizontal,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -90,131 +91,74 @@ interface Props {
   onToggleBillingAddon: (key: string) => void;
   onUploadImage: (file: File) => Promise<string>;
   selectedElement: EditableElement | null;
-  open: boolean;
-  onToggle: () => void;
+  onBackToSection: () => void;
   overlay?: boolean;
   onClose?: () => void;
 }
 
 export function PropertiesPanel(props: Props) {
-  const {
-    instance,
-    variant,
-    typography,
-    project,
-    open,
-    onToggle,
-    overlay,
-    onClose,
-    onTypographyChange,
-    onToggleBillingAddon,
-  } = props;
-  const [tab, setTab] = useState<"section" | "element" | "type" | "pricing">("section");
+  const { instance, variant, typography, project, selectedElement, overlay, onClose } = props;
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTab(props.selectedElement ? "element" : "section");
-  }, [instance?.id, props.selectedElement]);
-
-  useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
-  }, [instance?.id, tab]);
+  }, [instance?.id, selectedElement?.selector]);
 
-  if (!open) {
-    return (
-      <div className="w-10 border-l border-border bg-card/40 flex flex-col items-center py-3 gap-2 shrink-0">
-        <button
-          onClick={onToggle}
-          className="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-muted-foreground hover:text-foreground"
-          title="Abrir propriedades"
-        >
-          <PanelRight className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  }
+  const SectionIcon = variant ? (KIND_ICON[variant.kind] ?? Layers2) : SlidersHorizontal;
+  const title = selectedElement ? selectedElement.label : variant ? variant.name : "Ajustes do site";
+  const subtitle = selectedElement
+    ? `Dentro de ${variant?.name ?? "seção"}`
+    : variant
+      ? variant.description
+      : "Fonte e preços valem para o site todo";
 
   const asideCls = overlay
-    ? "absolute inset-y-0 right-0 z-30 w-[336px] max-w-[92vw] border-l border-border bg-card shadow-2xl flex flex-col"
-    : "w-[336px] shrink-0 border-l border-border bg-card flex flex-col";
+    ? "absolute inset-y-0 right-0 z-30 w-[320px] max-w-[92vw] border-l border-border bg-card shadow-2xl flex flex-col"
+    : "w-[320px] shrink-0 border-l border-border bg-card flex flex-col";
 
   return (
     <>
       {overlay && <div className="absolute inset-0 z-20 bg-black/50" onClick={onClose} />}
       <aside className={`${asideCls} editor-panel-in editor-properties`} aria-label="Painel de edição">
-        <div className="shrink-0 border-b border-border px-4 pb-3 pt-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">EDITAR SITE</p>
-              <h2 className="text-base font-semibold leading-none text-foreground">Propriedades</h2>
+        <div className="shrink-0 border-b border-border px-4 py-3">
+          {selectedElement && (
+            <button
+              type="button"
+              onClick={props.onBackToSection}
+              className="-ml-1 mb-2 flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Voltar para {variant?.name ?? "a seção"}
+            </button>
+          )}
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5">
+              <SectionIcon className="h-4 w-4 text-muted-foreground" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-sm font-semibold text-foreground">{title}</h2>
+              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>
             </div>
-            <button
-              onClick={overlay ? onClose : onToggle}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-              title="Fechar propriedades"
-              aria-label="Fechar propriedades"
-            >
-              <PanelRightClose className="w-4 h-4" />
-            </button>
-          </div>
-          <div role="tablist" aria-label="Opções de edição" className="grid grid-cols-2 gap-1.5 text-xs">
-            <button
-              onClick={() => setTab("section")}
-              role="tab"
-              aria-selected={tab === "section"}
-              className={`flex min-h-10 items-center justify-center gap-2 rounded-lg border px-2 transition-all ${tab === "section" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <Layers2 className="w-3.5 h-3.5" /> Seção
-            </button>
-            <button
-              onClick={() => setTab("element")}
-              role="tab"
-              aria-selected={tab === "element"}
-              className={`flex min-h-10 items-center justify-center gap-2 rounded-lg border px-2 transition-all ${tab === "element" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <Crosshair className="w-3.5 h-3.5" /> Elemento
-            </button>
-            <button
-              onClick={() => setTab("type")}
-              role="tab"
-              aria-selected={tab === "type"}
-              className={`flex min-h-10 items-center justify-center gap-2 rounded-lg border px-2 transition-all ${tab === "type" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <Type className="w-3.5 h-3.5" /> Tipografia
-            </button>
-            <button
-              onClick={() => setTab("pricing")}
-              role="tab"
-              aria-selected={tab === "pricing"}
-              className={`flex min-h-10 items-center justify-center gap-2 rounded-lg border px-2 transition-all ${tab === "pricing" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <Wallet className="w-3.5 h-3.5" /> Preços
-            </button>
+            {overlay && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                aria-label="Fechar painel"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div ref={contentRef} role="tabpanel" className="editor-panel-content flex-1 overflow-y-auto scrollbar-thin">
-          {tab === "element" ? (
-            <ElementLayoutPanel
+        <div ref={contentRef} className="editor-panel-content flex-1 overflow-y-auto scrollbar-thin">
+          {selectedElement && instance ? (
+            <ElementInspector
               instance={instance}
-              selectedElement={props.selectedElement}
+              selectedElement={selectedElement}
               onChange={props.onChange}
             />
-          ) : tab === "type" ? (
-            <TypographyPanel typography={typography} onChange={onTypographyChange} />
-          ) : tab === "pricing" ? (
-            <PricingPanel project={project} onToggleAddon={onToggleBillingAddon} />
-          ) : !instance || !variant ? (
-            <div className="p-6 text-xs text-muted-foreground text-center flex flex-col items-center gap-3">
-              <span className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                <Settings2 className="w-4 h-4" />
-              </span>
-              <div>
-                <p className="font-medium text-foreground">Selecione uma seção</p>
-                <p className="mt-1 leading-relaxed">Clique no preview para editar conteúdo, cores, imagens e links.</p>
-              </div>
-            </div>
-          ) : (
+          ) : instance && variant ? (
             <SectionFields
               instance={instance}
               variant={variant}
@@ -229,6 +173,13 @@ export function PropertiesPanel(props: Props) {
               onListReorder={props.onListReorder}
               onUploadImage={props.onUploadImage}
             />
+          ) : (
+            <SiteSettings
+              typography={typography}
+              project={project}
+              onTypographyChange={props.onTypographyChange}
+              onToggleBillingAddon={props.onToggleBillingAddon}
+            />
           )}
         </div>
       </aside>
@@ -236,95 +187,202 @@ export function PropertiesPanel(props: Props) {
   );
 }
 
-function ElementLayoutPanel({
+/** Shown when nothing is selected: site-wide settings plus a one-line hint. */
+function SiteSettings({
+  typography,
+  project,
+  onTypographyChange,
+  onToggleBillingAddon,
+}: {
+  typography: Typography;
+  project: ProjectState;
+  onTypographyChange: Props["onTypographyChange"];
+  onToggleBillingAddon: Props["onToggleBillingAddon"];
+}) {
+  return (
+    <div className="space-y-3 p-4">
+      <p className="flex items-start gap-2 rounded-lg bg-white/[0.04] p-3 text-xs leading-relaxed text-muted-foreground">
+        <MousePointerClick className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        Clique em uma seção ou em um texto, imagem ou botão do site para editar.
+      </p>
+      <Disclosure title="Fontes e texto" icon={Type} defaultOpen>
+        <TypographyPanel typography={typography} onChange={onTypographyChange} />
+      </Disclosure>
+      <Disclosure title="Preços do projeto" icon={Wallet}>
+        <PricingPanel project={project} onToggleAddon={onToggleBillingAddon} />
+      </Disclosure>
+    </div>
+  );
+}
+
+function Disclosure({
+  title,
+  icon: Icon,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  icon?: LucideIcon;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-xl border border-white/10">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium transition-colors hover:bg-white/5"
+      >
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+        <span className="flex-1">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="border-t border-white/10">{children}</div>}
+    </div>
+  );
+}
+
+/** Element selected on the canvas: color first, exact position tucked away. */
+function ElementInspector({
   instance,
   selectedElement,
   onChange,
 }: {
-  instance: SectionInstance | null;
-  selectedElement: EditableElement | null;
+  instance: SectionInstance;
+  selectedElement: EditableElement;
   onChange: (key: string, value: PropValue) => void;
 }) {
-  const map = parseElementLayout(instance?.props.elementLayout);
-  const customElements = instance ? list(instance.props, "customElements") : [];
-  const current = selectedElement ? elementLayout(map, selectedElement.selector) : null;
-  const setValue = (key: "x" | "y" | "width" | "height" | "scale", value: number) => {
-    if (!selectedElement) return;
-    const next = { ...map, [selectedElement.selector]: { ...elementLayout(map, selectedElement.selector), [key]: value } };
-    onChange("elementLayout", encodeElementLayout(next));
-  };
-  const setColor = (value: string) => {
-    if (!selectedElement) return;
-    onChange("elementLayout", encodeElementLayout({
-      ...map,
-      [selectedElement.selector]: { ...elementLayout(map, selectedElement.selector), color: value },
-    }));
-  };
+  const map = parseElementLayout(instance.props.elementLayout);
+  const current = elementLayout(map, selectedElement.selector);
+  const patch = (partial: Partial<ElementLayout>) =>
+    onChange(
+      "elementLayout",
+      encodeElementLayout({ ...map, [selectedElement.selector]: { ...current, ...partial } }),
+    );
   const reset = () => {
-    if (!selectedElement) return;
     const next = { ...map };
     delete next[selectedElement.selector];
     onChange("elementLayout", encodeElementLayout(next));
   };
-  const resetAll = () => onChange("elementLayout", "");
-  const addElement = (type: string) => {
-    const defaults: Record<string, Record<string, string>> = {
-      text: { text: "Escreva aqui" },
-      button: { text: "Botão", link: "" },
-      image: { src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200", alt: "" },
-      divider: {},
-      box: { text: "Container" },
-    };
-    onChange("customElements", [...customElements, { _id: uuid(), type, ...(defaults[type] ?? {}) }]);
-  };
-  const updateElement = (id: string, key: string, value: string) =>
-    onChange("customElements", customElements.map((item) => item._id === id ? { ...item, [key]: value } : item));
-  const removeElement = (id: string) => onChange("customElements", customElements.filter((item) => item._id !== id));
-  const input = "min-h-10 w-full rounded-lg border border-border bg-input/50 px-3 py-2 text-sm outline-none focus:border-foreground/50";
+  const modified = !!map[selectedElement.selector];
+  const input =
+    "mt-1 min-h-10 w-full rounded-lg border border-border bg-input/50 px-3 py-2 text-sm outline-none focus:border-foreground/50";
 
   return (
-    <div className="p-4 space-y-4">
-      <div>
-        <p className="text-sm font-semibold">Ajustes do elemento</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Selecione no canvas. Arraste para mover, use as alças para redimensionar ou edite o texto na barra sobre o elemento.</p>
-      </div>
-      {!instance ? <div className="rounded-xl border border-dashed border-white/10 p-4 text-xs text-muted-foreground">Selecione uma seção primeiro.</div> : (
-        <>
-          {!selectedElement ? (
-            <div className="rounded-xl border border-dashed border-white/10 p-4 text-xs leading-relaxed text-muted-foreground">Clique em um texto, botão, imagem ou container para ver suas ferramentas diretamente nele.</div>
-          ) : (
-            <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-3">
-              <div className="text-sm font-medium text-foreground truncate" title={selectedElement.label}>{selectedElement.label}</div>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-muted-foreground">Horizontal (px)<input className={`${input} mt-1`} type="number" min={-360} max={360} value={current?.x ?? 0} onChange={(event) => setValue("x", Number(event.target.value))} /></label>
-                <label className="text-xs text-muted-foreground">Vertical (px)<input className={`${input} mt-1`} type="number" min={-360} max={360} value={current?.y ?? 0} onChange={(event) => setValue("y", Number(event.target.value))} /></label>
-                <label className="col-span-2 text-xs text-muted-foreground">Largura (%)<input className={`${input} mt-1`} type="number" min={5} max={100} value={current?.width ?? 100} onChange={(event) => setValue("width", Number(event.target.value))} /></label>
-                <label className="col-span-2 text-xs text-muted-foreground">Altura (px, 0 = automática)<input className={`${input} mt-1`} type="number" min={0} max={1600} value={current?.height ?? 0} onChange={(event) => setValue("height", Number(event.target.value))} /></label>
-                <label className="col-span-2 text-xs text-muted-foreground">Escala (%)<input className={`${input} mt-1`} type="number" min={25} max={200} value={current?.scale ?? 100} onChange={(event) => setValue("scale", Number(event.target.value))} /></label>
-                {selectedElement.label !== "Imagem" && <label className="col-span-2 flex items-center justify-between text-xs text-muted-foreground">Cor deste elemento<input aria-label="Cor deste elemento" type="color" value={current?.color || "#ffffff"} onChange={(event) => setColor(event.target.value)} className="h-10 w-16 cursor-pointer rounded-lg border border-border bg-transparent p-1" /></label>}
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[["←", "x", -8], ["→", "x", 8], ["↑", "y", -8], ["↓", "y", 8]].map(([label, key, delta]) => (
-                  <button key={label as string} type="button" aria-label={`Mover ${label as string} 8 pixels`} onClick={() => setValue(key as "x" | "y", (current?.[key as "x" | "y"] ?? 0) + Number(delta))} className="min-h-10 rounded-lg border border-border py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground">{label}</button>
-                ))}
-              </div>
-              <button type="button" onClick={reset} className="w-full rounded-lg py-2 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground">Redefinir este elemento</button>
-            </div>
-          )}
-          <button type="button" onClick={resetAll} disabled={Object.keys(map).length === 0} className="min-h-10 w-full rounded-lg border border-border py-2 text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:opacity-40">Redefinir ajustes de todos os elementos</button>
-          <div className="border-t border-border pt-4">
-            <div className="mb-2 flex items-center justify-between"><span className="text-xs font-medium">Adicionar elemento</span><span className="text-[10px] text-muted-foreground">entra nesta seção</span></div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {[["text", "Texto"], ["button", "Botão"], ["image", "Imagem"], ["divider", "Divisor"], ["box", "Container"]].map(([type, label]) => <button key={type} type="button" onClick={() => addElement(type)} className="min-h-10 rounded-lg border border-dashed border-white/15 px-2 py-2 text-xs text-muted-foreground hover:border-foreground/30 hover:bg-white/[0.03] hover:text-foreground">+ {label}</button>)}
-            </div>
-            {customElements.length > 0 && <div className="mt-3 space-y-2">
-              {customElements.map((item, index) => <div key={item._id} className="rounded-lg border border-white/10 bg-black/20 p-2">
-                <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground"><span>{item.type === "box" ? "Div" : item.type} {index + 1}</span><button type="button" onClick={() => removeElement(item._id)} className="hover:text-destructive">Remover</button></div>
-                {item.type !== "divider" && <input value={item.type === "image" ? item.src ?? "" : item.text ?? ""} placeholder={item.type === "image" ? "URL da imagem" : "Conteúdo"} onChange={(event) => updateElement(item._id, item.type === "image" ? "src" : "text", event.target.value)} className={input} />}
-              </div>)}
-            </div>}
+    <div className="space-y-4 p-4">
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        {selectedElement.label === "Imagem"
+          ? "Use “Imagem” na barra sobre o elemento para trocar a foto."
+          : "Dê dois cliques no texto para editar. Arraste para mover e use as alças para mudar o tamanho."}
+      </p>
+
+      {selectedElement.label !== "Imagem" && (
+        <label className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2.5 text-sm">
+          Cor
+          <input
+            aria-label="Cor deste elemento"
+            type="color"
+            value={current.color || "#ffffff"}
+            onChange={(event) => patch({ color: event.target.value })}
+            className="h-9 w-14 cursor-pointer rounded-lg border border-border bg-transparent p-1"
+          />
+        </label>
+      )}
+
+      <Disclosure title="Posição e tamanho">
+        <div className="space-y-3 p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs text-muted-foreground">
+              Mover → (px)
+              <input className={input} type="number" min={-360} max={360} value={current.x} onChange={(e) => patch({ x: Number(e.target.value) })} />
+            </label>
+            <label className="text-xs text-muted-foreground">
+              Mover ↓ (px)
+              <input className={input} type="number" min={-360} max={360} value={current.y} onChange={(e) => patch({ y: Number(e.target.value) })} />
+            </label>
+            <label className="text-xs text-muted-foreground">
+              Largura (%)
+              <input className={input} type="number" min={5} max={100} value={current.width} onChange={(e) => patch({ width: Number(e.target.value) })} />
+            </label>
+            <label className="text-xs text-muted-foreground">
+              Altura (px)
+              <input className={input} type="number" min={0} max={1600} value={current.height} onChange={(e) => patch({ height: Number(e.target.value) })} placeholder="auto" />
+            </label>
+            <label className="col-span-2 text-xs text-muted-foreground">
+              Escala (%)
+              <input className={input} type="number" min={25} max={200} value={current.scale} onChange={(e) => patch({ scale: Number(e.target.value) })} />
+            </label>
           </div>
-        </>
+        </div>
+      </Disclosure>
+
+      <button
+        type="button"
+        onClick={reset}
+        disabled={!modified}
+        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-border text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+      >
+        <RotateCcw className="h-3.5 w-3.5" /> Voltar ao original
+      </button>
+    </div>
+  );
+}
+
+/** Extra blocks added from the canvas bar, plus a way to undo manual nudging. */
+function ExtrasSection({
+  instance,
+  onChange,
+}: {
+  instance: SectionInstance;
+  onChange: (key: string, value: PropValue) => void;
+}) {
+  const items = list(instance.props, "customElements");
+  const moved = Object.keys(parseElementLayout(instance.props.elementLayout)).length;
+  if (items.length === 0 && moved === 0) return null;
+  const update = (id: string, key: string, value: string) =>
+    onChange("customElements", items.map((item) => (item._id === id ? { ...item, [key]: value } : item)));
+  const input =
+    "min-h-10 w-full rounded-lg border border-border bg-input/50 px-3 py-2 text-sm outline-none focus:border-foreground/50";
+  return (
+    <div className="space-y-3">
+      {items.length > 0 && (
+        <Disclosure title={`Elementos adicionados (${items.length})`}>
+          <div className="space-y-2 p-3">
+            {items.map((item) => (
+              <div key={item._id} className="rounded-lg border border-white/10 p-2">
+                <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{{ text: "Texto", button: "Botão", image: "Imagem", divider: "Divisor", box: "Caixa" }[item.type] ?? item.type}</span>
+                  <button
+                    type="button"
+                    onClick={() => onChange("customElements", items.filter((i) => i._id !== item._id))}
+                    className="rounded px-1.5 py-0.5 hover:bg-destructive/15 hover:text-destructive"
+                  >
+                    Remover
+                  </button>
+                </div>
+                {item.type !== "divider" && (
+                  <input
+                    value={item.type === "image" ? (item.src ?? "") : (item.text ?? "")}
+                    placeholder={item.type === "image" ? "URL da imagem" : "Conteúdo"}
+                    onChange={(e) => update(item._id, item.type === "image" ? "src" : "text", e.target.value)}
+                    className={input}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </Disclosure>
+      )}
+      {moved > 0 && (
+        <button
+          type="button"
+          onClick={() => onChange("elementLayout", "")}
+          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-border text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> Desfazer posições movidas ({moved})
+        </button>
       )}
     </div>
   );
@@ -364,8 +422,6 @@ function SectionFields({
   const colorFields = variant.schema.filter((f) => f.type === "color");
   const contentSchema = variant.schema.filter((f) => f.type !== "color");
   const groups = groupFields(contentSchema);
-  const Icon = KIND_ICON[variant.kind] ?? Layers2;
-
   const renderField = (f: FieldSchema) =>
     f.type === "list" && f.key === "images" && f.itemSchema?.some((item) => item.type === "image") ? (
       <PhotoGridField
@@ -403,16 +459,6 @@ function SectionFields({
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-start gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 mt-0.5">
-          <Icon className="w-4 h-4 text-muted-foreground" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">{variant.name}</div>
-          <div className="text-xs text-muted-foreground mt-0.5">{variant.description}</div>
-        </div>
-      </div>
-
       <div className="border-t border-border pt-4">
         <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">Conteúdo</h3>
         <p className="mt-1 text-xs text-muted-foreground">Altere textos, imagens, links e itens desta seção.</p>
@@ -473,6 +519,7 @@ function SectionFields({
 
       <VisualEffectsPanel instance={instance} onChange={onChange} />
 
+      <ExtrasSection instance={instance} onChange={onChange} />
     </div>
   );
 }

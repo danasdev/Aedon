@@ -8,7 +8,8 @@ import { LinkProvider, type LinkResolver } from "./blocks/_link";
 import { CustomElements } from "./blocks/CustomElements";
 import { DeviceFrame } from "./DeviceFrame";
 import { ElementSelection } from "./ElementSelection";
-import { ChevronDown, ChevronUp, Copy, Image, Minus, MoreHorizontal, Plus, RotateCcw, Square, Trash2, Type } from "lucide-react";
+import { getVariant } from "@/lib/editor/sections";
+import { SectionBar, type NewElement } from "./SectionBar";
 
 interface Props {
   device: Device;
@@ -24,10 +25,9 @@ interface Props {
   onInteractionStart: () => void;
   onInteractionEnd: (changed: boolean) => void;
   onResetLayout: (sectionId: string) => void;
-  onAddElement: (sectionId: string, type: "text" | "button" | "image" | "divider" | "box") => void;
+  onAddElement: (sectionId: string, type: NewElement) => void;
   onInlineTextChange: (sectionId: string, previous: string, next: string) => void;
   onImageChange: (sectionId: string, previous: string, next: string) => void;
-  onBackgroundChange: (sectionId: string, color: string) => void;
   onSectionPropChange: (sectionId: string, key: string, value: string | boolean) => void;
   renderers: Record<string, ComponentType<{ props: PropMap }>>;
   typography: Typography;
@@ -39,7 +39,10 @@ interface Props {
   dragging: boolean;
 }
 
+/** Everything the layout engine may nudge/resize (kept broad so saved layouts keep applying). */
 const EDITABLE_SELECTOR = "div, h1, h2, h3, p, a, button, img, blockquote, figcaption, li, details";
+/** What a click may select: real content only. Wrappers fall through to the section. */
+const TEXT_SELECTOR = "h1, h2, h3, h4, p, a, button, blockquote, figcaption, li, summary";
 const INLINE_TEXT_SELECTOR = "h1, h2, h3, p, a, blockquote, figcaption, li, summary";
 
 function elementSelector(element: HTMLElement, root: HTMLElement) {
@@ -56,11 +59,16 @@ function elementSelector(element: HTMLElement, root: HTMLElement) {
   return current === root ? parts.join(" > ") : null;
 }
 
+function hasOwnText(element: HTMLElement) {
+  return Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+}
+
 function elementLabel(element: HTMLElement) {
   if (element.tagName === "IMG" || Array.from(element.children).some((child) => child.tagName === "IMG")) return "Imagem";
-  const type: Record<string, string> = { div: "Container", h1: "Título", h2: "Título", h3: "Título", p: "Texto", a: "Botão ou link", button: "Botão", img: "Imagem", blockquote: "Citação", figcaption: "Legenda", li: "Item", details: "Bloco" };
-  const preview = (element.textContent || element.getAttribute("alt") || "").trim().replace(/\s+/g, " ").slice(0, 32);
-  return preview ? `${type[element.tagName.toLowerCase()] ?? "Elemento"} · ${preview}` : type[element.tagName.toLowerCase()] ?? "Elemento";
+  const tag = element.tagName.toLowerCase();
+  if (tag === "a" || tag === "button") return "Botão";
+  if (/^h[1-4]$/.test(tag)) return "Título";
+  return "Texto";
 }
 
 function editableTarget(clicked: HTMLElement, root: HTMLElement) {
@@ -68,8 +76,11 @@ function editableTarget(clicked: HTMLElement, root: HTMLElement) {
   if (image && root.contains(image) && image.parentElement && image.parentElement !== root) {
     return image.parentElement;
   }
-  const target = clicked.closest<HTMLElement>(EDITABLE_SELECTOR);
-  return target && root.contains(target) ? target : null;
+  const text = clicked.closest<HTMLElement>(TEXT_SELECTOR);
+  if (text && root.contains(text)) return text;
+  // A plain <div> counts only when it directly holds text (e.g. a stat number).
+  const box = clicked.closest<HTMLElement>("div");
+  return box && box !== root && root.contains(box) && hasOwnText(box) ? box : null;
 }
 
 function SectionLayout({
@@ -83,7 +94,6 @@ function SectionLayout({
   onInteractionEnd,
   onInlineTextChange,
   onImageChange,
-  onBackgroundChange,
   onPropChange,
   children,
 }: {
@@ -98,14 +108,12 @@ function SectionLayout({
   onInteractionEnd: (changed: boolean) => void;
   onInlineTextChange: (previous: string, next: string) => void;
   onImageChange: (previous: string, next: string) => void;
-  onBackgroundChange: (color: string) => void;
   onPropChange: (key: string, value: string | boolean) => void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ pointerId: number; selector: string; startX: number; startY: number; x: number; y: number; moved: boolean } | null>(null);
   const suppressClickRef = useRef(false);
-  const [backgroundPicker, setBackgroundPicker] = useState(false);
 
   useEffect(() => {
     const root = ref.current;
@@ -220,28 +228,16 @@ function SectionLayout({
         if (clicked.closest("[data-editor-control]")) return;
         const root = ref.current;
         const target = root ? editableTarget(clicked, root) : null;
-        // Only empty section space opens the background picker. Nested containers
-        // are editable elements in their own right.
-        if (!target || target === root) {
+        // Anything that is not real content (wrappers, empty space) selects the section.
+        if (!target || target === root || !root?.contains(target)) {
           event.preventDefault();
           event.stopPropagation();
           onSelect(null);
-          setBackgroundPicker(true);
-          return;
-        }
-        if (!target || !root?.contains(target)) {
-          if (root?.contains(clicked)) {
-            event.preventDefault();
-            event.stopPropagation();
-            onSelect(null);
-            setBackgroundPicker(true);
-          }
           return;
         }
         if (clicked.isContentEditable) return;
         event.preventDefault();
         event.stopPropagation();
-        setBackgroundPicker(false);
         const selector = elementSelector(target, root);
         if (selector) onSelect({ selector, label: elementLabel(target) });
       }}
@@ -280,23 +276,6 @@ function SectionLayout({
           onImageChange={onImageChange}
         />
       )}
-      {backgroundPicker && (
-        <div data-editor-control className="editor-float-in absolute right-3 top-3 z-50 w-52 space-y-2 rounded-lg border border-white/15 bg-black/90 p-3 shadow-xl backdrop-blur" onClick={(event) => event.stopPropagation()}>
-          <span className="block text-[10px] font-medium uppercase tracking-wider text-white/70">Fundo da seção</span>
-          <label className="flex items-center justify-between gap-2 text-[10px] text-white/70">Cor
-          <input
-            type="color"
-            value={typeof props.bg === "string" ? props.bg : "#000000"}
-            onChange={(event) => onBackgroundChange(event.target.value)}
-            className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
-            title="Cor de fundo da seção"
-          />
-          </label>
-          <button type="button" onClick={() => onPropChange("gradientEnabled", !props.gradientEnabled)} className="flex w-full items-center justify-between rounded-md bg-white/10 px-2 py-1.5 text-[10px] text-white/80">Gradiente <span>{props.gradientEnabled ? "Ligado" : "Desligado"}</span></button>
-          {props.gradientEnabled === true && <div className="grid grid-cols-2 gap-2"><input type="color" aria-label="Início do gradiente" value={typeof props.gradientFrom === "string" ? props.gradientFrom : typeof props.bg === "string" ? props.bg : "#000000"} onChange={(event) => onPropChange("gradientFrom", event.target.value)} className="h-7 w-full cursor-pointer rounded bg-transparent" /><input type="color" aria-label="Fim do gradiente" value={typeof props.gradientTo === "string" ? props.gradientTo : typeof props.accent === "string" ? props.accent : "#ffffff"} onChange={(event) => onPropChange("gradientTo", event.target.value)} className="h-7 w-full cursor-pointer rounded bg-transparent" /><select aria-label="Direção do gradiente" value={typeof props.gradientDirection === "string" ? props.gradientDirection : "135deg"} onChange={(event) => onPropChange("gradientDirection", event.target.value)} className="col-span-2 rounded bg-white/10 px-2 py-1.5 text-[10px] text-white"><option value="135deg">Diagonal</option><option value="180deg">Vertical</option><option value="90deg">Horizontal</option><option value="45deg">Diagonal inversa</option></select></div>}
-          <button type="button" onClick={() => setBackgroundPicker(false)} className="w-full rounded-md py-1 text-[10px] text-white/60 hover:bg-white/10 hover:text-white">Concluído</button>
-        </div>
-      )}
     </div>
   );
 }
@@ -307,66 +286,6 @@ const FRAME_PADDING = 24; // px, on every side of the scaled frame
 function DropIndicator() {
   return (
     <div className="my-1.5 h-1 rounded-full bg-foreground animate-pulse" />
-  );
-}
-
-function SectionToolbar({
-  onDuplicate,
-  onRemove,
-  onMove,
-  onResetLayout,
-  onAddElement,
-  canMoveUp,
-  canMoveDown,
-}: {
-  onDuplicate: () => void;
-  onRemove: () => void;
-  onMove: (direction: -1 | 1) => void;
-  onResetLayout: () => void;
-  onAddElement: (type: "text" | "button" | "image" | "divider" | "box") => void;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-}) {
-  const [addOpen, setAddOpen] = useState(false);
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const actionClass = "flex min-h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[11px] text-white/80 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-30";
-  return (
-    <div
-      className="editor-float-in absolute right-3 top-3 z-20 flex items-center gap-1 rounded-xl border border-white/20 bg-black/90 p-1.5 shadow-xl backdrop-blur"
-      onClick={(event) => event.stopPropagation()}
-      onPointerDown={(event) => event.stopPropagation()}
-    >
-      <span className="hidden md:inline px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Seção</span>
-      <div className="relative">
-        <button type="button" onClick={() => { setAddOpen((open) => !open); setActionsOpen(false); }} className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium transition-colors ${addOpen ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/15 hover:text-white"}`} title="Adicionar elemento" aria-expanded={addOpen}>
-          <Plus className="h-3.5 w-3.5" /> Elemento
-        </button>
-        {addOpen && (
-          <div className="editor-float-in absolute right-0 top-11 z-30 flex w-40 flex-col gap-0.5 rounded-xl border border-white/20 bg-black/95 p-1.5 shadow-xl backdrop-blur">
-            {[["text", "Texto", Type], ["button", "Botão", Square], ["image", "Imagem", Image], ["divider", "Divisor", Minus], ["box", "Div", Square]].map(([type, label, Icon]) => (
-              <button key={type as string} type="button" onClick={() => { onAddElement(type as "text" | "button" | "image" | "divider" | "box"); setAddOpen(false); }} className={actionClass}>
-                {(() => { const C = Icon as typeof Type; return <C className="h-3 w-3" />; })()} {label as string}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="relative">
-        <button type="button" onClick={() => { setActionsOpen((open) => !open); setAddOpen(false); }} className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium transition-colors ${actionsOpen ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/15 hover:text-white"}`} title="Ações da seção" aria-expanded={actionsOpen}>
-          <MoreHorizontal className="h-3.5 w-3.5" /> Ações
-        </button>
-        {actionsOpen && (
-          <div className="editor-float-in absolute right-0 top-11 z-30 flex w-44 flex-col gap-0.5 rounded-xl border border-white/20 bg-black/95 p-1.5 shadow-xl backdrop-blur">
-            <button type="button" onClick={() => { onMove(-1); setActionsOpen(false); }} disabled={!canMoveUp} className={actionClass}><ChevronUp className="h-3.5 w-3.5" /> Subir seção</button>
-            <button type="button" onClick={() => { onMove(1); setActionsOpen(false); }} disabled={!canMoveDown} className={actionClass}><ChevronDown className="h-3.5 w-3.5" /> Descer seção</button>
-            <button type="button" onClick={() => { onDuplicate(); setActionsOpen(false); }} className={actionClass}><Copy className="h-3.5 w-3.5" /> Duplicar</button>
-            <button type="button" onClick={() => { onResetLayout(); setActionsOpen(false); }} className={actionClass}><RotateCcw className="h-3.5 w-3.5" /> Redefinir layout</button>
-            <div className="my-1 h-px bg-white/10" />
-            <button type="button" onClick={() => { onRemove(); setActionsOpen(false); }} className={`${actionClass} hover:bg-destructive/25 hover:text-red-200`}><Trash2 className="h-3.5 w-3.5" /> Excluir seção</button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -453,7 +372,6 @@ export function Canvas({
   onAddElement,
   onInlineTextChange,
   onImageChange,
-  onBackgroundChange,
   onSectionPropChange,
   renderers,
   typography,
@@ -464,6 +382,7 @@ export function Canvas({
 }: Props) {
   const width = WIDTHS[device];
   const visible = sections.filter((s) => !s.hidden && renderers[s.variantId]);
+  const activeIndex = visible.findIndex((s) => s.id === selectedId);
 
   const mainRef = useRef<HTMLElement>(null);
   const [availableWidth, setAvailableWidth] = useState(width);
@@ -569,7 +488,6 @@ export function Canvas({
                     onInteractionEnd={onInteractionEnd}
                     onInlineTextChange={(previous, next) => onInlineTextChange(s.id, previous, next)}
                     onImageChange={(previous, next) => onImageChange(s.id, previous, next)}
-                    onBackgroundChange={(color) => onBackgroundChange(s.id, color)}
                     onPropChange={(key, value) => onSectionPropChange(s.id, key, value)}
                   >
                     {/* The surface above owns the fill. Keeping children transparent means
@@ -578,17 +496,6 @@ export function Canvas({
                     <CustomElements props={s.props} />
                   </SectionLayout>
                 </SectionMotion>
-                {active && (
-                  <SectionToolbar
-                    onDuplicate={() => onDuplicate(s.id)}
-                    onRemove={() => onRemove(s.id)}
-                    onMove={(direction) => onMove(s.id, direction)}
-                    onResetLayout={() => onResetLayout(s.id)}
-                    onAddElement={(type) => onAddElement(s.id, type)}
-                    canMoveUp={i > 0}
-                    canMoveDown={i < visible.length - 1}
-                  />
-                )}
               </div>
             </div>
           );
@@ -604,19 +511,7 @@ export function Canvas({
       className="flex-1 min-w-0 overflow-auto scrollbar-thin bg-[#050505]"
       style={{ padding: FRAME_PADDING }}
     >
-      <div className="mx-auto mb-4 flex max-w-4xl flex-wrap items-center justify-between gap-3">
-        {!previewMode ? (
-          <div className="flex items-center gap-2 text-xs text-white/65" role="status">
-            <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-white/65" />
-            {selectedElement
-              ? `${selectedElement.label} selecionado · arraste ou use as alças e a barra sobre ele`
-              : selectedId
-                ? "Clique em um elemento para ver as opções sobre ele"
-                : visible.length > 0
-                  ? "Clique em um elemento do site para editar · biblioteca à esquerda para adicionar"
-                  : "Escolha um componente na biblioteca para começar"}
-          </div>
-        ) : <span className="text-xs text-white/65">Prévia interativa</span>}
+      <div className="mx-auto mb-4 flex max-w-4xl items-center justify-end gap-3">
         <div role="group" aria-label="Zoom do canvas" className="flex items-center rounded-lg border border-white/15 bg-white/[0.04] p-1 text-xs text-white/80">
           <button type="button" onClick={() => changeZoom(-0.1)} aria-label="Diminuir zoom" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/10">−</button>
           <span className="min-w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
@@ -646,6 +541,22 @@ export function Canvas({
           </div>
         </div>
       </div>
+      {!previewMode && activeIndex >= 0 && (
+        <div className="pointer-events-none sticky bottom-4 z-30 h-0">
+          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+            <SectionBar
+              key={visible[activeIndex].id}
+              name={getVariant(visible[activeIndex].variantId)?.name ?? "Seção"}
+              canMoveUp={activeIndex > 0}
+              canMoveDown={activeIndex < visible.length - 1}
+              onMove={(dir) => onMove(visible[activeIndex].id, dir)}
+              onDuplicate={() => onDuplicate(visible[activeIndex].id)}
+              onRemove={() => onRemove(visible[activeIndex].id)}
+              onAddElement={(type) => onAddElement(visible[activeIndex].id, type)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

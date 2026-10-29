@@ -55,6 +55,9 @@ function scrollCanvasToSection(sectionId: string, attempt = 0) {
   }
 }
 
+/** Library + edit panel side by side leave too little canvas below this width. */
+const tightScreen = () => typeof window !== "undefined" && window.innerWidth < 1400;
+
 export function EditorShell({ user, projectId }: { user: User | null; projectId: string }) {
   const store = useProject(projectId);
   const syncStatus = useCloudSync({
@@ -68,7 +71,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
   const [previewMode, setPreviewMode] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
-  const [propsOpen, setPropsOpen] = useState(false);
+  const [propsOpen, setPropsOpen] = useState(true);
   const [selectedElement, setSelectedElement] = useState<EditableElement | null>(null);
 
   const sections = store.activePage.sections;
@@ -81,7 +84,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
       libraryPrefs.pushRecent(variantId);
       setSelectedId(id);
       setSelectedElement(null);
-      setLibraryOpen(false);
+      if (isNarrow || tightScreen()) setLibraryOpen(false);
       setPropsOpen(true);
       window.setTimeout(() => scrollCanvasToSection(id), 120);
     },
@@ -95,7 +98,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
       libraryPrefs.pushRecent(variantId);
       setSelectedId(id);
       setSelectedElement(null);
-      setLibraryOpen(false);
+      if (isNarrow || tightScreen()) setLibraryOpen(false);
       setPropsOpen(true);
       window.setTimeout(() => scrollCanvasToSection(id), 120);
     },
@@ -218,9 +221,9 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
         onTogglePreview={() => setPreviewMode((v) => !v)}
         onExport={() => downloadHTML(store.project, store.activePageId)}
         isNarrow={isNarrow}
-        onOpenLibrary={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen) setPropsOpen(false); }}
+        onOpenLibrary={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen && isNarrow) setPropsOpen(false); }}
         propsOpen={propsOpen}
-        onToggleProps={() => { setPropsOpen(!propsOpen); if (!propsOpen) setLibraryOpen(false); }}
+        onToggleProps={() => { setPropsOpen(!propsOpen); if (!propsOpen && isNarrow) setLibraryOpen(false); }}
         email={user ? (user.email ?? "") : null}
         syncStatus={syncStatus}
         onSignOut={user ? () => { signOut(); } : undefined}
@@ -231,7 +234,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
         {!previewMode && (!isNarrow || libraryOpen) && (
           <SectionLibrary
             open={libraryOpen}
-            onToggle={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen) setPropsOpen(false); }}
+            onToggle={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen && isNarrow) setPropsOpen(false); }}
             onAdd={activateVariant}
             onInsertPreset={(preset: PagePreset, destination) => {
               const ids = destination === "new"
@@ -244,7 +247,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
                 setPropsOpen(true);
                 window.setTimeout(() => scrollCanvasToSection(firstId), 140);
               }
-              setLibraryOpen(false);
+              if (isNarrow || tightScreen()) setLibraryOpen(false);
             }}
             sections={sections}
             selectedId={selectedId}
@@ -252,7 +255,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
               setSelectedId(id);
               setSelectedElement(null);
               setPropsOpen(true);
-              setLibraryOpen(false);
+              if (isNarrow || tightScreen()) setLibraryOpen(false);
             }}
             onRemove={store.removeSection}
             onDuplicate={store.duplicateSection}
@@ -274,7 +277,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
             setSelectedId(id);
             setSelectedElement(null);
             if (focus === "section") setPropsOpen(true);
-            setLibraryOpen(false);
+            if (isNarrow || tightScreen()) setLibraryOpen(false);
           }}
           onDuplicate={store.duplicateSection}
           onRemove={(id) => {
@@ -286,7 +289,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
           onElementSelect={(element) => {
             setSelectedElement(element);
             if (!element) setPropsOpen(true);
-            setLibraryOpen(false);
+            if (isNarrow || tightScreen()) setLibraryOpen(false);
           }}
           onElementLayoutChange={(sectionId, selector, patch) => {
             const section = sections.find((item) => item.id === sectionId);
@@ -356,7 +359,6 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
               }
             }
           }}
-          onBackgroundChange={(sectionId, color) => store.updateProp(sectionId, "bg", color)}
           onSectionPropChange={(sectionId, key, value) => store.updateProp(sectionId, key, value)}
           renderers={RENDERERS}
           typography={store.project.typography}
@@ -391,8 +393,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
               selected && store.reorderListItem(selected.id, k, fromId, toId)
             }
             onTypographyChange={store.updateTypography}
-            open={propsOpen}
-            onToggle={() => setPropsOpen((v) => !v)}
+            onBackToSection={() => setSelectedElement(null)}
             overlay={isNarrow}
             onClose={() => setPropsOpen(false)}
           />
