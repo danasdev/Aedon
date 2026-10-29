@@ -7,7 +7,7 @@ Design de referência: Figma "Aedon — Nova interface" (https://www.figma.com/d
 - O Aedon é um produto da Entropy e usa a paleta dela, mais uma cor de interação. Os tokens ficam em `src/styles.css` (`:root`):
   - `void` `#0a0a0a` (fundo), `panel` `#121211`, `surface` `#181817`, `surface-2` `#201f1d`, `hairline` `#2e2d2b` (bordas);
   - `ink` `#f5f4f1` (texto), `ink-muted` `#a3a19b`, `faint` `#6b6964` (rótulos);
-  - `grain` `#d8cfbd` só nos rótulos `// mono` (eyebrows) e números; `chrome` `#d9d9d6` para um brilho raro;
+  - `grain` `#d8cfbd` só nos rótulos de destaque (eyebrows) e números; `chrome` `#d9d9d6` para um brilho raro;
   - `ion` `#3ccfe0` (ciano gelo) e `ion-deep` `#1a8a99`: **somente** seleção, foco, item ativo e ação principal (~3% da tela). Nunca no logo, em texto corrido ou como decoração.
 - Tipografia: Geist para toda a interface (400/500/600), com rótulos em 12 px / 500 (`.ae-eyebrow` em grain, `.ae-label` em ink-muted), sem caixa alta forçada. Archivo 700 em caixa alta só em títulos de exibição (`.ae-display`, `.ae-title`). Mono apenas em atalhos de teclado e no zoom. Nenhum texto da interface abaixo de 12 px.
 - Ícones: Phosphor, peso bold (contexto global em `__root`), importados de `src/components/icons.ts`. Blocos do site mantêm os próprios ícones.
