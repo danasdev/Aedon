@@ -12,6 +12,7 @@ import {
 import { SectionLibrary } from "./SectionLibrary";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { Canvas } from "./Canvas";
+import { EmptyPageStart } from "./EmptyPageStart";
 import { EditorTopBar } from "./EditorTopBar";
 import { FontLoader } from "./FontLoader";
 import { useLibraryPrefs } from "@/hooks/use-library-prefs";
@@ -90,6 +91,21 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
     },
     [store, libraryPrefs],
   );
+
+  const insertPreset = (preset: PagePreset, destination: "current" | "new") => {
+    const ids =
+      destination === "new"
+        ? store.addPresetPage(preset.name, preset.sectionIds)
+        : store.addComposition(preset.sectionIds);
+    const firstId = ids[0] ?? null;
+    setSelectedId(firstId);
+    setSelectedElement(null);
+    if (firstId) {
+      setPropsOpen(true);
+      window.setTimeout(() => scrollCanvasToSection(firstId), 140);
+    }
+    if (isNarrow || tightScreen()) setLibraryOpen(false);
+  };
 
   const canvasDrag = useCanvasDrag({
     getIframe: () => document.querySelector("iframe"),
@@ -236,19 +252,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
             open={libraryOpen}
             onToggle={() => { setLibraryOpen(!libraryOpen); if (!libraryOpen && isNarrow) setPropsOpen(false); }}
             onAdd={activateVariant}
-            onInsertPreset={(preset: PagePreset, destination) => {
-              const ids = destination === "new"
-                ? store.addPresetPage(preset.name, preset.sectionIds)
-                : store.addComposition(preset.sectionIds);
-              const firstId = ids[0] ?? null;
-              setSelectedId(firstId);
-              setSelectedElement(null);
-              if (firstId) {
-                setPropsOpen(true);
-                window.setTimeout(() => scrollCanvasToSection(firstId), 140);
-              }
-              if (isNarrow || tightScreen()) setLibraryOpen(false);
-            }}
+            onInsertPreset={insertPreset}
             sections={sections}
             selectedId={selectedId}
             onSelect={(id) => {
@@ -364,6 +368,7 @@ export function EditorShell({ user, projectId }: { user: User | null; projectId:
           typography={store.project.typography}
           previewMode={previewMode}
           resolveLink={resolveLink}
+          emptyState={<EmptyPageStart onPick={(preset) => insertPreset(preset, "current")} />}
           dropIndex={canvasDrag.dropIndex}
           dragging={canvasDrag.variantId !== null}
         />

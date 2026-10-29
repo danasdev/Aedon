@@ -4,6 +4,12 @@ import type { PropMap, SectionInstance, SectionVariant, LibraryCategory } from "
 import type { useLibraryPrefs } from "@/hooks/use-library-prefs";
 import type { DragState } from "@/hooks/use-canvas-drag";
 import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type LibraryPrefs = ReturnType<typeof useLibraryPrefs>;
 type DragStart = Pick<DragState, "start">;
@@ -87,7 +93,7 @@ export function SectionLibrary({
   overlay,
   onClose,
 }: Props) {
-  const [tab, setTab] = useState<"layers" | "library" | "presets">("library");
+  const [tab, setTab] = useState<"add" | "layers">("add");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   if (!open) {
@@ -119,48 +125,35 @@ export function SectionLibrary({
     <>
       {overlay && <div className="absolute inset-0 z-20 bg-black/50" onClick={onClose} />}
       <aside className={`${asideCls} editor-library-in`} aria-label="Biblioteca e camadas">
-        <div className="shrink-0 border-b border-border px-3 pb-3 pt-4">
-          <div className="mb-4 flex items-center justify-between gap-3 px-1">
-            <div>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">CONSTRUIR</p>
-              <h2 className="text-base font-semibold leading-none text-foreground">Biblioteca</h2>
+        <div className="shrink-0 border-b border-border p-3">
+          <div className="flex items-center gap-2">
+            <div role="tablist" aria-label="Biblioteca do editor" className="grid flex-1 grid-cols-2 gap-1 rounded-lg bg-white/5 p-1 text-xs font-medium">
+              {([["add", "Adicionar", Plus], ["layers", "Seções", Layers]] as const).map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  onClick={() => setTab(id)}
+                  role="tab"
+                  aria-selected={tab === id}
+                  className={`flex h-8 items-center justify-center gap-1.5 rounded-md transition-colors ${tab === id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                  {id === "layers" && sections.length > 0 && <span className="text-[10px] text-muted-foreground">{sections.length}</span>}
+                </button>
+              ))}
             </div>
             <button
               onClick={overlay ? onClose : onToggle}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-              title="Fechar biblioteca"
-              aria-label="Fechar biblioteca"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              title="Fechar painel"
+              aria-label="Fechar painel"
             >
-              <PanelLeftClose className="w-4 h-4" />
-            </button>
-          </div>
-          <div role="tablist" aria-label="Biblioteca do editor" className="grid grid-cols-3 gap-1 text-[11px]">
-            <button
-              onClick={() => setTab("layers")}
-              role="tab"
-              aria-selected={tab === "layers"}
-              className={`flex min-h-10 items-center justify-center gap-1 rounded-lg border px-1 transition-all ${tab === "layers" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <Layers className="w-3.5 h-3.5" /> Camadas
-            </button>
-            <button
-              onClick={() => setTab("library")}
-              role="tab"
-              aria-selected={tab === "library"}
-              className={`flex min-h-10 items-center justify-center gap-1 rounded-lg border px-1 transition-all ${tab === "library" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}
-            >
-              <LibraryBig className="w-3.5 h-3.5" /> Componentes
-            </button>
-            <button onClick={() => setTab("presets")} role="tab" aria-selected={tab === "presets"} className={`flex min-h-10 items-center justify-center gap-1 rounded-lg border px-1 transition-all ${tab === "presets" ? "border-foreground/30 bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}>
-              <LayoutGrid className="w-3.5 h-3.5" /> Presets
+              <PanelLeftClose className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         <div role="tabpanel" className="flex-1 overflow-y-auto scrollbar-thin p-3">
-          {tab === "presets" ? (
-            <PresetBrowser sections={sections} onInsert={onInsertPreset} />
-          ) : tab === "layers" ? (
+          {tab === "layers" ? (
             <>
               {sections.length > 1 && (
                 <div className="px-1 pb-2 text-[11px] text-muted-foreground">
@@ -202,7 +195,7 @@ export function SectionLibrary({
               </DndContext>
             </>
           ) : (
-            <LibraryBrowser prefs={prefs} drag={drag} onAdd={onAdd} />
+            <AddPanel sections={sections} prefs={prefs} drag={drag} onAdd={onAdd} onInsertPreset={onInsertPreset} />
           )}
         </div>
       </aside>
@@ -210,40 +203,74 @@ export function SectionLibrary({
   );
 }
 
-function PresetBrowser({ sections, onInsert }: { sections: SectionInstance[]; onInsert: (preset: PagePreset, destination: "current" | "new") => void }) {
-  const [active, setActive] = useState<PagePreset | null>(null);
-  if (active) {
-    return (
-      <div className="space-y-3">
-        <button onClick={() => setActive(null)} className="flex min-h-9 items-center gap-2 text-xs text-muted-foreground hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Todos os presets</button>
-        <div>
-          <h3 className="text-sm font-semibold">{active.name}</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{active.description}</p>
-        </div>
-        <div className="overflow-hidden rounded-lg border border-border bg-white">
-          {active.sectionIds.map((id) => <div key={id} className="h-[54px] overflow-hidden border-b border-black/10 last:border-0"><VariantPreview variantId={id} defaults={getVariant(id)?.defaults ?? {}} scale={0.18} height={54} /></div>)}
-        </div>
-        <p className="text-[11px] text-muted-foreground">{active.sectionIds.length} blocos editáveis, adicionados como seções comuns.</p>
-        <div className="space-y-2 border-t border-border pt-3">
-          <button onClick={() => onInsert(active, "new")} className="min-h-10 w-full rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Criar nova página</button>
-          <button onClick={() => onInsert(active, "current")} className="min-h-10 w-full rounded-lg border border-border px-3 text-xs font-medium hover:bg-white/5">{sections.length ? "Adicionar à página atual" : "Usar nesta página vazia"}</button>
-          {sections.length > 0 && <p className="text-center text-[10px] leading-relaxed text-muted-foreground">Adicionar à página atual preserva os blocos existentes e insere o preset ao final.</p>}
-        </div>
-      </div>
-    );
-  }
+function AddPanel({
+  sections,
+  prefs,
+  drag,
+  onAdd,
+  onInsertPreset,
+}: {
+  sections: SectionInstance[];
+  prefs: LibraryPrefs;
+  drag: DragStart;
+  onAdd: (id: string) => void;
+  onInsertPreset: (preset: PagePreset, destination: "current" | "new") => void;
+}) {
   return (
-    <div className="space-y-3">
-      <div className="px-1"><p className="text-xs font-medium">Comece com uma composição</p><p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Cada preset é feito de blocos independentes que você pode editar e reorganizar.</p></div>
-      {PAGE_PRESETS.map((preset) => (
-        <div key={preset.id} role="button" tabIndex={0} onClick={() => setActive(preset)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setActive(preset); } }} className="group w-full cursor-pointer overflow-hidden rounded-lg border border-border text-left transition-colors hover:border-foreground/35 hover:bg-white/[0.025] focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground">
-          <div className="h-[86px] overflow-hidden bg-white">
-            {preset.sectionIds.slice(0, 3).map((id) => <div key={id} className="h-[30px] overflow-hidden border-b border-black/10"><VariantPreview variantId={id} defaults={getVariant(id)?.defaults ?? {}} scale={0.16} height={30} /></div>)}
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2.5"><div className="min-w-0 flex-1"><p className="text-xs font-medium">{preset.name}</p><p className="mt-0.5 text-[10px] text-muted-foreground">{preset.sectionIds.length} blocos</p></div><ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" /></div>
-        </div>
-      ))}
+    <div className="space-y-6">
+      <LibraryBrowser
+        prefs={prefs}
+        drag={drag}
+        onAdd={onAdd}
+        header={<PresetStrip sections={sections} onInsert={onInsertPreset} />}
+      />
     </div>
+  );
+}
+
+/** Ready-made page compositions. One click adds them; a menu offers "new page" too. */
+function PresetStrip({
+  sections,
+  onInsert,
+}: {
+  sections: SectionInstance[];
+  onInsert: (preset: PagePreset, destination: "current" | "new") => void;
+}) {
+  return (
+    <section aria-label="Páginas prontas">
+      <h3 className="mb-2 px-1 text-xs font-semibold text-foreground">Páginas prontas</h3>
+      <div className="grid grid-cols-2 gap-2">
+        {PAGE_PRESETS.map((preset) => (
+          <DropdownMenu key={preset.id}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                title={preset.description}
+                className="group overflow-hidden rounded-lg border border-border text-left transition-colors hover:border-foreground/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground data-[state=open]:border-foreground/50"
+              >
+                <div className="h-[72px] overflow-hidden bg-white">
+                  {preset.sectionIds.slice(0, 3).map((id) => (
+                    <div key={id} className="h-6 overflow-hidden border-b border-black/10">
+                      <VariantPreview variantId={id} defaults={getVariant(id)?.defaults ?? {}} scale={0.1} height={24} />
+                    </div>
+                  ))}
+                </div>
+                <div className="px-2 py-1.5">
+                  <p className="truncate text-xs font-medium">{preset.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{preset.sectionIds.length} blocos</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuItem onSelect={() => onInsert(preset, "current")}>
+                {sections.length ? "Adicionar ao fim desta página" : "Usar nesta página"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onInsert(preset, "new")}>Criar nova página com ele</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -255,20 +282,20 @@ const CATEGORY_ICON: Record<LibraryCategory, LucideIcon> = {
   Footer: PanelBottom,
 };
 
-type SectionKey = LibraryCategory | "__fav" | "__recent";
 type HoverPreview = { variant: SectionVariant; left: number; top: number };
 
 function LibraryBrowser({
   prefs,
   drag,
   onAdd,
+  header,
 }: {
   prefs: LibraryPrefs;
   drag: DragStart;
   onAdd: (id: string) => void;
+  header?: React.ReactNode;
 }) {
   const [query, setQuery] = useState("");
-  const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const [previewing, setPreviewing] = useState<SectionVariant | null>(null);
   const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
   const q = query.trim().toLowerCase();
@@ -370,121 +397,31 @@ function LibraryBrowser({
     );
   }
 
-  // Drilled into one section: show its components with a way back.
-  if (openSection) {
-    const isCat = openSection !== "__fav" && openSection !== "__recent";
-    const items = isCat
-      ? (byCategory.find((g) => g.cat === openSection)?.items ?? [])
-      : openSection === "__fav"
-        ? favoriteItems
-        : recentItems;
-    const label = isCat ? openSection : openSection === "__fav" ? "Favoritos" : "Recentes";
-    const Icon = isCat ? CATEGORY_ICON[openSection] : openSection === "__fav" ? Star : Clock;
-
-    return (
-      <>
-      <div>
-        <button
-          onClick={() => setOpenSection(null)}
-          className="mb-3 flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Categorias
-        </button>
+  // Default: presets, then every component grouped by category — no drilling in and out.
+  const groups: { key: string; label: string; Icon: LucideIcon; items: SectionVariant[] }[] = [
+    ...(favoriteItems.length ? [{ key: "fav", label: "Favoritos", Icon: Star, items: favoriteItems }] : []),
+    ...(recentItems.length ? [{ key: "recent", label: "Recentes", Icon: Clock, items: recentItems }] : []),
+    ...byCategory.map(({ cat, items }) => ({ key: cat, label: cat, Icon: CATEGORY_ICON[cat], items })),
+  ];
+  return (
+    <>
+      <div className="space-y-5">
         {searchBar}
-        <div className="mb-3 flex items-center gap-2 px-1">
-          <Icon className="w-4 h-4 text-muted-foreground" />
-          <div className="text-sm font-semibold text-foreground">{label}</div>
-          <span className="ml-auto text-[11px] text-muted-foreground">{items.length}</span>
+        {header}
+        <div className="space-y-5">
+          {groups.map(({ key, label, Icon, items }) => (
+            <section key={key} aria-label={label}>
+              <h3 className="mb-2 flex items-center gap-2 px-1 text-xs font-semibold text-foreground">
+                <Icon className="h-3.5 w-3.5 text-muted-foreground" /> {label}
+              </h3>
+              {cardGrid(items)}
+            </section>
+          ))}
         </div>
-        {items.length > 0 ? (
-          cardGrid(items)
-        ) : (
-          <div className="text-xs text-muted-foreground text-center py-10">
-            {openSection === "__fav"
-              ? "Toque na estrela de um componente para favoritá-lo."
-              : "Os últimos componentes que você adicionar aparecem aqui."}
-          </div>
-        )}
       </div>
       {hoverPreview && <HoverPreviewCard preview={hoverPreview} />}
       {previewing && <PreviewDialog variant={previewing} onClose={() => setPreviewing(null)} />}
-      </>
-    );
-  }
-
-  // Default: the list of clickable sections (categories + favorites/recents).
-  return (
-    <>
-    <div>
-      {searchBar}
-      <div className="mb-3 rounded-lg border border-white/8 bg-white/[0.025] px-3 py-2.5">
-        <p className="text-xs font-medium text-foreground">Adicione uma seção</p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">Escolha uma categoria, clique em um componente para adicionar ou arraste para posicionar na página.</p>
-      </div>
-      <div className="space-y-1.5">
-        {favoriteItems.length > 0 && (
-          <SectionRow
-            Icon={Star}
-            label="Favoritos"
-            count={favoriteItems.length}
-            onClick={() => setOpenSection("__fav")}
-          />
-        )}
-        {recentItems.length > 0 && (
-          <SectionRow
-            Icon={Clock}
-            label="Recentes"
-            count={recentItems.length}
-            onClick={() => setOpenSection("__recent")}
-          />
-        )}
-        {(favoriteItems.length > 0 || recentItems.length > 0) && (
-          <div className="h-px bg-border my-2" />
-        )}
-        {byCategory.map(({ cat, items }) => (
-          <SectionRow
-            key={cat}
-            Icon={CATEGORY_ICON[cat]}
-            label={cat}
-            count={items.length}
-            onClick={() => setOpenSection(cat)}
-          />
-        ))}
-      </div>
-    </div>
-    {hoverPreview && <HoverPreviewCard preview={hoverPreview} />}
-    {previewing && <PreviewDialog variant={previewing} onClose={() => setPreviewing(null)} />}
     </>
-  );
-}
-
-function SectionRow({
-  Icon,
-  label,
-  count,
-  onClick,
-}: {
-  Icon: LucideIcon;
-  label: string;
-  count: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="group w-full flex min-h-[62px] items-center gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/35 hover:bg-secondary/80 focus-visible:border-foreground/50"
-    >
-      <div className="w-9 h-9 rounded-lg bg-white/5 group-hover:bg-foreground/10 flex items-center justify-center shrink-0 transition-colors">
-        <Icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium text-foreground">{label}</div>
-        <div className="text-[11px] text-muted-foreground">
-          {count} componente{count === 1 ? "" : "s"}
-        </div>
-      </div>
-      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-    </button>
   );
 }
 
@@ -589,7 +526,7 @@ function VariantCard({
   );
 }
 
-function VariantPreview({
+export function VariantPreview({
   variantId,
   defaults,
   scale = 0.2,

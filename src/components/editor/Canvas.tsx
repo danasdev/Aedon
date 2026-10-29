@@ -37,6 +37,8 @@ interface Props {
   dropIndex: number | null;
   /** True while a library component is being dragged (disables iframe interaction). */
   dragging: boolean;
+  /** Rendered in place of the page frame when the page has no visible sections. */
+  emptyState?: ReactNode;
 }
 
 /** Everything the layout engine may nudge/resize (kept broad so saved layouts keep applying). */
@@ -379,6 +381,7 @@ export function Canvas({
   resolveLink,
   dropIndex,
   dragging,
+  emptyState,
 }: Props) {
   const width = WIDTHS[device];
   const visible = sections.filter((s) => !s.hidden && renderers[s.variantId]);
@@ -519,6 +522,7 @@ export function Canvas({
           <button type="button" onClick={() => setZoom("fit")} aria-pressed={zoom === "fit"} className={`ml-1 min-h-8 rounded-md px-2 ${zoom === "fit" ? "bg-white/15 text-white" : "hover:bg-white/10"}`}>Ajustar</button>
         </div>
       </div>
+      {!previewMode && emptyState && sections.length === 0 && !dragging ? emptyState : (
       <div className={`min-h-full flex items-start ${width * scale > availableWidth ? "justify-start" : "justify-center"}`}>
         {/* Reserves the true scaled-down footprint so centering never overflows the
             viewport — the frame inside renders at full device width and is scaled
@@ -541,6 +545,7 @@ export function Canvas({
           </div>
         </div>
       </div>
+      )}
       {!previewMode && activeIndex >= 0 && (
         <div className="pointer-events-none sticky bottom-4 z-30 h-0">
           <div className="absolute inset-x-0 bottom-0 flex justify-center">
