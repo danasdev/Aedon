@@ -31,7 +31,10 @@ function Blobs({ colors }: { colors: string[] }) {
     "right-[30%] -top-[6%]",
   ];
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+    <div
+      className="blob-field pointer-events-none absolute inset-x-0 -inset-y-40 overflow-hidden"
+      aria-hidden
+    >
       {colors.map((c, i) => (
         <span
           key={i}
@@ -95,8 +98,8 @@ function PresetStack({
 export function EditorShowcase() {
   const preset = byId("perfumaria");
   return (
-    <section className="relative overflow-hidden py-28 sm:py-36">
-      <Blobs colors={["#3ccfe0", "#d8a657", "#6b4fd8", "#1f4d3a"]} />
+    <section className="relative overflow-x-clip py-28 sm:py-36">
+      <Blobs colors={["#e8d9bc", "#c2562b", "#6b4fd8", "#1f4d3a"]} />
       <div className="relative mx-auto max-w-[1400px] px-6 sm:px-10">
         <div className="mx-auto max-w-2xl text-center">
           <p className="ae-eyebrow reveal" data-reveal>
@@ -198,9 +201,9 @@ export function PaletteShowcase() {
   );
 
   return (
-    <section className="relative overflow-hidden py-28 sm:py-36">
+    <section className="relative overflow-x-clip py-28 sm:py-36">
       <div
-        className="pointer-events-none absolute inset-0 transition-[background] duration-1000"
+        className="blob-field pointer-events-none absolute inset-x-0 -inset-y-32 transition-[background] duration-1000"
         style={{
           background: `radial-gradient(60% 70% at 70% 50%, ${palette.accent}55, transparent 70%), radial-gradient(40% 50% at 15% 80%, ${palette.paperDeep}22, transparent 70%)`,
         }}
@@ -264,7 +267,7 @@ export function PaletteShowcase() {
         </div>
         <div data-parallax="-0.06" className="reveal" data-reveal>
           <div className="glass rounded-[22px] p-2.5">
-            <div className="overflow-hidden rounded-2xl">
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl">
               <PresetStack preset={preset} heights={[64, 560, 420]} recolor={recolor} />
             </div>
           </div>
@@ -317,7 +320,7 @@ export function SegmentsBento() {
                 height={i === 0 ? 496 : 240}
               />
             </div>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent via-40% to-transparent" />
             <span className="glass absolute bottom-3 left-3 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-foreground">
               <span className="font-medium">{p.brand}</span>
               <span className="text-foreground/60">{p.segment}</span>
@@ -339,10 +342,6 @@ export function StepsStrip() {
   return (
     <section id="como-funciona" className="relative mx-auto max-w-[1400px] px-6 pb-28 sm:px-10">
       <div className="relative grid gap-4 sm:grid-cols-3">
-        <span
-          className="steps-line pointer-events-none absolute left-[16%] right-[16%] top-1/2 hidden h-px sm:block"
-          aria-hidden
-        />
         {steps.map((s, i) => (
           <div
             key={s.n}
@@ -368,8 +367,8 @@ export function StepsStrip() {
 export function PricingGlass() {
   const extras = FEATURES.filter((f) => f.kind === "toggle").slice(0, 3);
   return (
-    <section id="preco" className="relative overflow-hidden py-28 sm:py-36">
-      <Blobs colors={["#6b4fd8", "#3ccfe0", "#c2562b"]} />
+    <section id="preco" className="relative overflow-x-clip py-28 sm:py-36">
+      <Blobs colors={["#6b4fd8", "#e8d9bc", "#d8a657"]} />
       <div className="relative mx-auto max-w-3xl px-6">
         <div className="reveal glass rounded-[28px] p-8 text-center sm:p-14" data-reveal>
           <p className="ae-eyebrow">Preço</p>

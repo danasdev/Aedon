@@ -197,8 +197,22 @@ export function TemplateGallery({
         const { clientWidth: cw, clientHeight: ch } = host;
         renderer.setSize(cw, ch, false);
         camera.aspect = cw / Math.max(1, ch);
-        // Narrow screens: step back so the active card still fits.
-        camera.position.z = CFG.cameraDistance * Math.max(1, 1.25 / camera.aspect);
+        // Portrait screens: face the cards more and put the camera exactly where the
+        // active card fills ~90% of the width (stepping back blindly made them tiny).
+        const portrait = camera.aspect < 1;
+        const halfFov = THREE.MathUtils.degToRad(CFG.cameraFOV / 2);
+        const fitDistance =
+          (CARD_W * CFG.galleryScale) / 0.9 / (2 * Math.tan(halfFov) * camera.aspect);
+        camera.position.z = portrait
+          ? Math.max(CFG.cameraDistance, fitDistance)
+          : CFG.cameraDistance;
+        gallery.rotation.x = THREE.MathUtils.degToRad(portrait ? -14 : CFG.galleryRotX);
+        gallery.rotation.y = THREE.MathUtils.degToRad(portrait ? -10 : CFG.galleryRotY);
+        // Fog starts behind the active card, so it only fades the cards further back.
+        if (scene.fog instanceof THREE.Fog) {
+          scene.fog.near = camera.position.z + 1;
+          scene.fog.far = camera.position.z + 9;
+        }
         camera.updateProjectionMatrix();
         dirty = true;
       };

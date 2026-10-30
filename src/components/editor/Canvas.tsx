@@ -193,7 +193,7 @@ function SectionLayout({
     target.contentEditable = "true";
     target.style.userSelect = "text";
     target.spellcheck = true;
-    target.style.outline = "2px solid #3ccfe0";
+    target.style.outline = "2px solid #e8d9bc";
     target.style.outlineOffset = "4px";
     target.focus();
     const range = target.ownerDocument.createRange();
@@ -349,7 +349,7 @@ const FRAME_PADDING = 32; // px around the scaled frame
 const TOOLBAR_SPACE = 72; // px above the frame reserved for the contextual toolbar
 
 function DropIndicator() {
-  return <div className="my-1.5 h-1 rounded-full bg-[#3ccfe0] animate-pulse" />;
+  return <div className="my-1.5 h-1 rounded-full bg-[#e8d9bc] animate-pulse" />;
 }
 
 /** Hover target between two sections: "+ Adicionar seção" inserts exactly there. */
@@ -366,7 +366,7 @@ function InsertGap({
     <div data-editor-control className="group/gap relative z-30 h-0">
       <div className="absolute inset-x-0 -top-3 h-6" />
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[#3ccfe0] transition-opacity ${
+        className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[#e8d9bc] shadow-[0_0_0_1px_rgba(10,10,10,0.45)] transition-opacity ${
           active ? "opacity-100" : "opacity-0 group-hover/gap:opacity-100"
         }`}
       />
@@ -376,7 +376,7 @@ function InsertGap({
           event.stopPropagation();
           onInsert(index);
         }}
-        className={`absolute left-1/2 top-0 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-[#3ccfe0] px-4 text-[13px] font-semibold text-[#0a0a0a] shadow-[0_3px_0_#1a8a99] transition-opacity ${
+        className={`absolute left-1/2 top-0 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-[#e8d9bc] px-4 ring-1 ring-black/40 text-[13px] font-semibold text-[#0a0a0a] shadow-[0_3px_0_#a18d68] transition-opacity ${
           active ? "opacity-100" : "opacity-0 group-hover/gap:opacity-100 focus-visible:opacity-100"
         }`}
         style={{ fontFamily: "Geist, Inter, sans-serif" }}
@@ -597,15 +597,15 @@ export function Canvas({
                     data-editor-control
                     className={`pointer-events-none absolute inset-0 z-20 transition-shadow ${
                       active && !selectedElement
-                        ? "shadow-[inset_0_0_0_2px_#3ccfe0]"
+                        ? "shadow-[inset_0_0_0_2px_#e8d9bc,inset_0_0_0_3.5px_rgba(10,10,10,0.55)]"
                         : active
-                          ? "shadow-[inset_0_0_0_1px_rgba(60,207,224,0.45)]"
-                          : "group-hover/section:shadow-[inset_0_0_0_1px_rgba(60,207,224,0.4)]"
+                          ? "shadow-[inset_0_0_0_1px_rgba(232,217,188,0.45)]"
+                          : "group-hover/section:shadow-[inset_0_0_0_1px_rgba(232,217,188,0.4)]"
                     }`}
                   >
                     {active && !selectedElement && (
                       <span
-                        className="absolute left-2 top-2 rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-xs font-semibold leading-none text-[#0a0a0a]"
+                        className="absolute left-2 top-2 rounded-[5px] bg-[#e8d9bc] px-2 shadow-[0_0_0_1px_rgba(10,10,10,0.5)] py-[3px] text-xs font-semibold leading-none text-[#0a0a0a]"
                         style={{ fontFamily: "Geist, Inter, sans-serif" }}
                       >
                         {name}

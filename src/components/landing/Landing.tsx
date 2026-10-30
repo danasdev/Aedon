@@ -24,6 +24,7 @@ export function Landing() {
   const lenisRef = useRef<import("lenis").default | null>(null);
   const [active, setActive] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   /** Scroll position (px) where the gallery shows template `i`. */
   const scrollForIndex = useCallback((i: number) => {
@@ -43,6 +44,7 @@ export function Landing() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const onScroll = (y: number) => {
+      setScrolled(y > 24);
       const el = sectionRef.current;
       if (el) {
         const p = (y - el.offsetTop) / (window.innerHeight * STEP_VH);
@@ -138,7 +140,13 @@ export function Landing() {
   return (
     <div className="bg-background text-foreground">
       {/* Fixed header over the gallery */}
-      <header className="fixed inset-x-0 top-0 z-50">
+      <header
+        className={`fixed inset-x-0 top-0 z-50 transition-[background,border-color,backdrop-filter] duration-500 ${
+          scrolled
+            ? "border-b border-white/5 bg-background/55 backdrop-blur-xl"
+            : "border-b border-transparent"
+        }`}
+      >
         <nav className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 sm:px-10">
           <AedonLogo />
           <div className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">

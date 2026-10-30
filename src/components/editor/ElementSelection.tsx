@@ -3,7 +3,14 @@ import type { EditableElement, ElementLayout } from "@/lib/editor/layout";
 
 type LayoutPatch = Partial<ElementLayout>;
 type Handle =
-  "left" | "right" | "top" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  | "left"
+  | "right"
+  | "top"
+  | "bottom"
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
 
 interface Props {
   root: HTMLDivElement | null;
@@ -142,12 +149,12 @@ export function ElementSelection({
   return (
     <div
       data-editor-control
-      className="ae-pop pointer-events-none absolute z-40 rounded-[3px] border-2 border-[#3ccfe0] shadow-[0_0_0_1px_rgba(10,10,10,0.55)]"
+      className="ae-pop pointer-events-none absolute z-40 rounded-[3px] border-2 border-[#e8d9bc] shadow-[0_0_0_1px_rgba(10,10,10,0.6),inset_0_0_0_1px_rgba(10,10,10,0.6)]"
       style={{ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }}
       onClick={(event) => event.stopPropagation()}
     >
       <span
-        className={`absolute left-[-2px] rounded-[5px] bg-[#3ccfe0] px-2 py-[3px] text-xs font-semibold leading-none text-[#0a0a0a] ${
+        className={`absolute left-[-2px] rounded-[5px] bg-[#e8d9bc] px-2 shadow-[0_0_0_1px_rgba(10,10,10,0.5)] py-[3px] text-xs font-semibold leading-none text-[#0a0a0a] ${
           tagBelow ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]"
         }`}
         style={{ fontFamily: "Geist, Inter, sans-serif" }}
@@ -159,7 +166,7 @@ export function ElementSelection({
           key={name}
           type="button"
           aria-label="Arraste para redimensionar"
-          className={`pointer-events-auto absolute h-3 w-3 touch-none rounded-[3px] border-2 border-[#3ccfe0] bg-[#f5f4f1] ${style}`}
+          className={`pointer-events-auto absolute h-3 w-3 touch-none rounded-[3px] border-2 border-[#e8d9bc] bg-[#f5f4f1] ${style}`}
           onPointerDown={(event) => beginResize(event, name)}
           onPointerMove={resize}
           onPointerUp={(event) => {
