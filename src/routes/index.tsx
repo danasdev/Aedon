@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landing } from "@/components/landing/Landing";
-import { SHOWCASE_FONTS_HREF } from "@/components/landing/templates";
+import { SHOWCASE_FONTS_HREF } from "@/components/landing/showcase";
 
 export const Route = createFileRoute("/")({
   head: () => ({

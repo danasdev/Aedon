@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { paletteColors, type Palette } from "./palettes";
-import type { Page, ProjectState, PropValue, SectionInstance, Typography } from "./types";
+import type { Page, ProjectState, PropMap, PropValue, SectionInstance, Typography } from "./types";
 import { createInstance, cloneProps, getVariant } from "./sections";
 import { DEFAULT_TYPOGRAPHY } from "./typography";
 import { uuid } from "./id";
@@ -64,6 +64,19 @@ function normalize(raw: unknown): ProjectState {
 function newListItem(variantId: string, key: string) {
   const field = getVariant(variantId)?.schema.find((f) => f.key === key);
   return { _id: uuid(), ...(field?.itemDefaults ?? {}) };
+}
+
+/** New sections for a preset: block defaults plus the preset's own content, with fresh list ids. */
+function presetInstances(
+  variantIds: string[],
+  content?: (PropMap | undefined)[],
+): SectionInstance[] {
+  return variantIds.flatMap((variantId, i) => {
+    if (!getVariant(variantId)) return [];
+    const instance = createInstance(variantId);
+    const extra = content?.[i];
+    return [extra ? { ...instance, props: cloneProps({ ...instance.props, ...extra }) } : instance];
+  });
 }
 
 /** Manages a single project's editing state (undo history, active page, autosave).
@@ -304,11 +317,8 @@ export function useProject(projectId: string) {
 
   /** Insert a preset as independent regular section instances in one history step. */
   const addComposition = useCallback(
-    (variantIds: string[], atIndex?: number) => {
-      const instances = variantIds.flatMap((variantId) => {
-        const instance = getVariant(variantId) ? createInstance(variantId) : null;
-        return instance ? [instance] : [];
-      });
+    (variantIds: string[], atIndex?: number, content?: (PropMap | undefined)[]) => {
+      const instances = presetInstances(variantIds, content);
       if (!instances.length) return [] as string[];
       editActivePage((sections) => {
         const next = [...sections];
@@ -322,12 +332,9 @@ export function useProject(projectId: string) {
 
   /** Create a new page and fill it with a cloned preset composition. */
   const addPresetPage = useCallback(
-    (name: string, variantIds: string[]) => {
+    (name: string, variantIds: string[], content?: (PropMap | undefined)[]) => {
       const id = uuid();
-      const sections = variantIds.flatMap((variantId) => {
-        const instance = getVariant(variantId) ? createInstance(variantId) : null;
-        return instance ? [instance] : [];
-      });
+      const sections = presetInstances(variantIds, content);
       commit((p) => ({
         ...p,
         pages: [

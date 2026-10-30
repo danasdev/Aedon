@@ -36,12 +36,16 @@ export type SectionBackground = {
   direction: string;
   /** Second colour of a decorative glow, for blocks that have one. */
   glow?: string;
+  /** Background photo (empty when none) and how much it's darkened, 0–80. */
+  photo: string;
+  overlay: number;
 };
 
 type SectionActions = {
   name: string;
   background: SectionBackground;
   onBackgroundChange: (patch: Record<string, string | boolean>) => void;
+  onUploadImage: (file: File) => Promise<string>;
   onEditContent: () => void;
   contentOpen: boolean;
   canMoveUp: boolean;
@@ -189,7 +193,11 @@ function SectionTools(s: SectionActions) {
   return (
     <>
       <Tag icon={Square}>{s.name}</Tag>
-      <BackgroundTool value={s.background} onChange={s.onBackgroundChange} />
+      <BackgroundTool
+        value={s.background}
+        onChange={s.onBackgroundChange}
+        onUpload={s.onUploadImage}
+      />
       <button
         type="button"
         onClick={s.onEditContent}
@@ -343,15 +351,50 @@ const DIRECTIONS: { value: string; label: string; rotate: number }[] = [
   { value: "45deg", label: "Diagonal inversa", rotate: -45 },
 ];
 
-/** Section fill: one colour, or a two-colour gradient (plus the glow on blocks that have one). */
+type BgMode = "solid" | "gradient" | "photo";
+
+/** Section fill: one colour, a two-colour gradient, or a photo (plus the glow on blocks that have one). */
 function BackgroundTool({
   value: v,
   onChange,
+  onUpload,
 }: {
   value: SectionBackground;
   onChange: (patch: Record<string, string | boolean>) => void;
+  onUpload: (file: File) => Promise<string>;
 }) {
-  const preview = v.gradient ? `linear-gradient(${v.direction}, ${v.from}, ${v.to})` : v.base;
+  const mode: BgMode = v.photo ? "photo" : v.gradient ? "gradient" : "solid";
+  // Remember the last photo so switching modes back and forth doesn't lose it.
+  const [lastPhoto, setLastPhoto] = useState(v.photo);
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const shade = v.overlay / 100;
+  const preview =
+    mode === "photo"
+      ? `linear-gradient(rgba(0,0,0,${shade}), rgba(0,0,0,${shade})), url("${v.photo}") center / cover, ${v.base}`
+      : mode === "gradient"
+        ? `linear-gradient(${v.direction}, ${v.from}, ${v.to})`
+        : v.base;
+
+  const setPhoto = (src: string) => {
+    setLastPhoto(src);
+    setError(null);
+    onChange({ bgImage: src, gradientEnabled: false });
+  };
+
+  const pick = (next: BgMode) => {
+    if (next === "solid") onChange({ gradientEnabled: false, bgImage: "" });
+    if (next === "gradient")
+      onChange({ gradientEnabled: true, bgImage: "", gradientFrom: v.from, gradientTo: v.to });
+    if (next === "photo") {
+      if (lastPhoto) onChange({ bgImage: lastPhoto, gradientEnabled: false });
+      else fileRef.current?.click();
+    }
+  };
+
   return (
     <Popover>
       <Tooltip>
@@ -363,8 +406,15 @@ function BackgroundTool({
             >
               <PaintBucket className="h-4 w-4 text-muted-foreground" /> Fundo
               <span className="flex -space-x-1.5">
-                <Swatch color={v.gradient ? v.from : v.base} />
-                {v.gradient && <Swatch color={v.to} />}
+                {mode === "photo" ? (
+                  <span
+                    className="h-5 w-5 rounded-md bg-cover bg-center shadow-[0_0_0_1.5px_var(--surface),0_0_0_2.5px_rgb(245_244_241/0.28)]"
+                    style={{ backgroundImage: `url("${v.photo}")` }}
+                  />
+                ) : (
+                  <Swatch color={mode === "gradient" ? v.from : v.base} />
+                )}
+                {mode === "gradient" && <Swatch color={v.to} />}
                 {v.glow && <Swatch color={v.glow} round />}
               </span>
             </button>
@@ -375,38 +425,104 @@ function BackgroundTool({
       <PopoverContent
         align="start"
         sideOffset={10}
-        className="w-72 space-y-4 rounded-xl border-border bg-surface p-4"
+        className="w-80 space-y-4 rounded-xl border-border bg-surface p-4"
         data-editor-control
       >
         <div
-          className="h-14 rounded-lg shadow-[inset_0_0_0_1px_rgb(245_244_241/0.12)] transition-[background] duration-300"
+          className="h-20 rounded-lg shadow-[inset_0_0_0_1px_rgb(245_244_241/0.12)] transition-[background] duration-300"
           style={{ background: preview }}
         />
         <div className="ae-seg" role="radiogroup" aria-label="Tipo de fundo">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={!v.gradient}
-            aria-pressed={!v.gradient}
-            onClick={() => onChange({ gradientEnabled: false })}
-            className="flex-1 text-xs"
-          >
-            Cor sólida
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={v.gradient}
-            aria-pressed={v.gradient}
-            onClick={() =>
-              onChange({ gradientEnabled: true, gradientFrom: v.from, gradientTo: v.to })
-            }
-            className="flex-1 text-xs"
-          >
-            Gradiente
-          </button>
+          {(
+            [
+              ["solid", "Cor"],
+              ["gradient", "Gradiente"],
+              ["photo", "Foto"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={mode === id}
+              aria-pressed={mode === id}
+              onClick={() => pick(id)}
+              className="flex-1 text-xs"
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        {v.gradient ? (
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setBusy(true);
+            try {
+              setPhoto(await onUpload(file));
+            } catch {
+              setError("Não deu para enviar essa foto. Tente outra ou cole um link.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+
+        {mode === "photo" ? (
+          <>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => fileRef.current?.click()}
+              className="ae-btn w-full"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Trocar foto
+            </button>
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (url.trim()) setPhoto(url.trim());
+              }}
+            >
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                aria-label="Link da foto"
+                placeholder="Ou cole o link de uma foto"
+                className="ae-input h-9 min-h-0 text-[13px]"
+              />
+              <button type="submit" className="ae-btn ae-btn-sm h-9">
+                Usar
+              </button>
+            </form>
+            <label className="block">
+              <span className="mb-1.5 flex items-center justify-between">
+                <span className="ae-label">Escurecer a foto</span>
+                <span className="text-xs tabular-nums text-foreground">{v.overlay}%</span>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={80}
+                step={5}
+                value={v.overlay}
+                onChange={(e) => onChange({ bgOverlay: e.target.value })}
+                className="w-full cursor-pointer accent-[var(--ion)]"
+              />
+              <span className="mt-1 block text-xs text-faint">
+                Ajuda o texto a ficar legível sobre a foto.
+              </span>
+            </label>
+          </>
+        ) : mode === "gradient" ? (
           <>
             <ColorRow
               label="Cor inicial"
@@ -444,7 +560,8 @@ function BackgroundTool({
         ) : (
           <ColorRow label="Cor" value={v.base} onChange={(c) => onChange({ bg: c })} />
         )}
-        {v.glow !== undefined && (
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        {v.glow !== undefined && mode !== "photo" && (
           <ColorRow label="Cor do brilho" value={v.glow} onChange={(c) => onChange({ glow: c })} />
         )}
       </PopoverContent>

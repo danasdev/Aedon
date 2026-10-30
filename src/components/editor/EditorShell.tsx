@@ -100,6 +100,8 @@ function sectionBackgroundOf(props: PropMap, variantId: string): SectionBackgrou
     to: text("gradientTo", accent),
     direction: text("gradientDirection", "135deg"),
     glow: GLOW_VARIANTS.has(variantId) ? text("glow", accent) : undefined,
+    photo: text("bgImage", "") ? parseImage(text("bgImage", "")).src : "",
+    overlay: Math.max(0, Math.min(80, Number(text("bgOverlay", "35")) || 0)),
   };
 }
 
@@ -201,7 +203,8 @@ export function EditorShell({
     presetApplied.current = true;
     const preset = PAGE_PRESETS.find((p) => p.id === initialPreset);
     if (preset && store.project.pages.length === 1 && store.activePage.sections.length === 0) {
-      store.addComposition(preset.sectionIds);
+      if (preset.typography) store.updateTypography(preset.typography);
+      store.addComposition(preset.sectionIds, undefined, preset.content);
     }
     onPresetConsumed?.();
   }, [initialPreset, syncStatus, store, user, onPresetConsumed]);
@@ -293,10 +296,13 @@ export function EditorShell({
   });
 
   const insertPreset = (preset: PagePreset, destination: "current" | "new") => {
+    // A preset on an empty site also brings its fonts; on a site in progress it only adds blocks.
+    const siteEmpty = store.project.pages.every((p) => p.sections.length === 0);
+    if (siteEmpty && preset.typography) store.updateTypography(preset.typography);
     const ids =
       destination === "new"
-        ? store.addPresetPage(preset.name, preset.sectionIds)
-        : store.addComposition(preset.sectionIds);
+        ? store.addPresetPage(preset.name, preset.sectionIds, preset.content)
+        : store.addComposition(preset.sectionIds, undefined, preset.content);
     if (ids[0]) afterAdd(ids[0]);
   };
 
@@ -467,6 +473,7 @@ export function EditorShell({
           name: selectedVariant.name,
           background: sectionBackgroundOf(selected.props, selected.variantId),
           onBackgroundChange: (patch) => store.updateProps(selected.id, patch),
+          onUploadImage: (file) => uploadProjectImage(file, user?.id ?? null),
           onEditContent: () => setContentOpen((open) => !open),
           contentOpen,
           canMoveUp: visibleIndex > 0,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CATEGORY_ORDER, VARIANTS, getVariant } from "@/lib/editor/sections";
-import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
+import { PAGE_PRESETS, type PagePreset, presetSectionProps } from "@/lib/editor/presets";
 import type { LibraryCategory } from "@/lib/editor/types";
 import type { DragState } from "@/hooks/use-canvas-drag";
 import {
@@ -214,11 +214,12 @@ export function AddPanel(props: Props) {
                   >
                     <div className="ae-tile overflow-hidden p-1.5 group-hover:-translate-y-0.5 group-focus-visible:border-ion group-data-[state=open]:border-ion">
                       <div className="overflow-hidden rounded-[6px]">
-                        {preset.sectionIds.slice(0, 3).map((id) => (
+                        {preset.sectionIds.slice(0, 3).map((id, i) => (
                           <VariantPreview
                             key={id}
                             variantId={id}
-                            defaults={getVariant(id)?.defaults ?? {}}
+                            defaults={presetSectionProps(preset, i)}
+                            typography={preset.typography}
 
                             height={24}
                           />

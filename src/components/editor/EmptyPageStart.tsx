@@ -1,5 +1,4 @@
-import { getVariant } from "@/lib/editor/sections";
-import { PAGE_PRESETS, type PagePreset } from "@/lib/editor/presets";
+import { PAGE_PRESETS, type PagePreset, presetSectionProps } from "@/lib/editor/presets";
 import { Plus } from "@/components/icons";
 import { VariantPreview } from "./VariantPreview";
 
@@ -36,11 +35,12 @@ export function EmptyPageStart({
           >
             <div className="ae-tile overflow-hidden p-2 group-hover:-translate-y-0.5 group-focus-visible:border-ion">
               <div className="overflow-hidden rounded-[7px]">
-                {preset.sectionIds.slice(0, 3).map((id) => (
+                {preset.sectionIds.slice(0, 3).map((id, i) => (
                   <VariantPreview
                     key={id}
                     variantId={id}
-                    defaults={getVariant(id)?.defaults ?? {}}
+                    defaults={presetSectionProps(preset, i)}
+                    typography={preset.typography}
 
                     height={42}
                   />

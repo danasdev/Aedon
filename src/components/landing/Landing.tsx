@@ -4,7 +4,7 @@ import { ArrowRight } from "@/components/icons";
 import { AedonLogo } from "@/components/editor/AedonMark";
 import { BASE_PLAN, FEATURES, formatBRL } from "@/lib/pricing/catalog";
 import { TemplateGallery } from "./TemplateGallery";
-import { SHOWCASE } from "./templates";
+import { SHOWCASE } from "./showcase";
 
 /** Scroll distance (in viewport heights) that moves the gallery by one template. */
 const STEP_VH = 0.62;
@@ -189,7 +189,11 @@ export function Landing() {
           <TemplateGallery
             targetRef={targetRef}
             onActiveChange={setActive}
-            onCardClick={(i) => (i === active ? navigate({ to: "/projects" }) : goTo(i))}
+            onCardClick={(i) =>
+              i === active
+                ? navigate({ to: "/projects", search: { modelo: SHOWCASE[i].id } })
+                : goTo(i)
+            }
           />
 
           {/* corner marks */}
@@ -240,8 +244,8 @@ export function Landing() {
               <h2 className="mt-2 text-3xl font-medium tracking-[-0.02em] sm:text-4xl">
                 {t.brand}
               </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">{t.pitch}</p>
-              <Link to="/projects" className="ae-btn ae-btn-primary mt-5">
+              <p className="mt-1.5 text-sm text-muted-foreground">{t.description}</p>
+              <Link to="/projects" search={{ modelo: t.id }} className="ae-btn ae-btn-primary mt-5">
                 Usar este modelo <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

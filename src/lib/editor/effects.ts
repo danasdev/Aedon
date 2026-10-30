@@ -1,11 +1,19 @@
 import type { PropMap } from "./types";
 import { bool, str } from "./props";
+import { objectPosition, parseImage } from "./images";
 
 export type EntryAnimation = "none" | "fade" | "slide-up" | "slide-left" | "zoom";
 export type ScrollEffect = "none" | "parallax" | "fade";
 
 export function sectionBackground(props: PropMap): string {
   const base = str(props, "bg", "#000000");
+  const photo = str(props, "bgImage");
+  if (photo) {
+    // Photo backdrop: darkened by a flat overlay so text stays readable, colour as fallback.
+    const img = parseImage(photo);
+    const shade = Math.max(0, Math.min(90, Number(str(props, "bgOverlay", "35")) || 0)) / 100;
+    return `linear-gradient(rgba(0,0,0,${shade}), rgba(0,0,0,${shade})), url("${img.src}") ${objectPosition(img)} / cover no-repeat, ${base}`;
+  }
   if (!bool(props, "gradientEnabled")) return base;
   const from = str(props, "gradientFrom", base);
   const to = str(props, "gradientTo", str(props, "accent", "#D4D4D8"));

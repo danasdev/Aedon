@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Mesh, MeshPhysicalMaterial } from "three";
-import { SHOWCASE } from "./templates";
-import { ART_H, ART_W, loadShowcaseFonts, paintTemplate } from "./templateArt";
+import { SHOWCASE } from "./showcase";
+import { SNAP_H, SNAP_W, snapshotPreset } from "./presetSnapshot";
 
 /**
  * 3D gallery of landing-page cards, after a24.raviklaassens.com's disc gallery:
@@ -28,7 +28,7 @@ const CFG = {
 };
 
 const CARD_W = 2.08;
-const CARD_H = (CARD_W * ART_H) / ART_W;
+const CARD_H = (CARD_W * SNAP_H) / SNAP_W;
 
 export function TemplateGallery({
   targetRef,
@@ -143,10 +143,19 @@ export function TemplateGallery({
         return { mesh, mat, hover: 0, intro: reduced ? 1 : 0 };
       });
 
-      // Paint textures (fonts first so canvas text renders in the right families).
-      loadShowcaseFonts(SHOWCASE).then(() =>
-        SHOWCASE.forEach(async (t, i) => {
-          const canvas = await paintTemplate(t);
+      // Set whenever something changes; the loop skips rendering while the scene is still.
+      let dirty = true;
+
+      // Textures are snapshots of the real presets, taken one at a time (first card first).
+      (async () => {
+        for (let i = 0; i < SHOWCASE.length; i++) {
+          if (disposed) return;
+          let canvas: HTMLCanvasElement;
+          try {
+            canvas = await snapshotPreset(SHOWCASE[i]);
+          } catch {
+            continue;
+          }
           if (disposed) return;
           const tex = new THREE.CanvasTexture(canvas);
           tex.colorSpace = THREE.SRGBColorSpace;
@@ -158,15 +167,13 @@ export function TemplateGallery({
           cards[i].mat.color.set(0xffffff);
           cards[i].mat.needsUpdate = true;
           dirty = true;
-        }),
-      );
+        }
+      })();
 
       // ---- input: pointer hover/click ----
       const pointer = new THREE.Vector2(10, 10);
       const raycaster = new THREE.Raycaster();
       let hovered = -1;
-      // Set whenever something changes; the loop skips rendering while the scene is still.
-      let dirty = true;
       const onMove = (e: PointerEvent) => {
         dirty = true;
         const rect = host.getBoundingClientRect();

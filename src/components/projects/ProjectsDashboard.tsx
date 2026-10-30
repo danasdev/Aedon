@@ -36,8 +36,7 @@ import { AuthScreen } from "@/components/editor/AuthScreen";
 import { VariantPreview } from "@/components/editor/VariantPreview";
 import { isSupabaseEnabled } from "@/lib/supabase/client";
 import { signOut, useAuth } from "@/lib/supabase/auth";
-import { getVariant } from "@/lib/editor/sections";
-import { PAGE_PRESETS } from "@/lib/editor/presets";
+import { PAGE_PRESETS, presetSectionProps } from "@/lib/editor/presets";
 import {
   createLocalProject,
   deleteLocalProject,
@@ -55,7 +54,7 @@ import {
   renameCloudProject,
 } from "@/lib/supabase/projects";
 
-export function ProjectsDashboard() {
+export function ProjectsDashboard({ initialModel }: { initialModel?: string }) {
   const { user, loading } = useAuth();
 
   if (isSupabaseEnabled) {
@@ -67,24 +66,33 @@ export function ProjectsDashboard() {
       );
     }
     if (!user) return <AuthScreen />;
-    return <Dashboard mode="cloud" userId={user.id} userEmail={user.email ?? ""} />;
+    return (
+      <Dashboard
+        mode="cloud"
+        userId={user.id}
+        userEmail={user.email ?? ""}
+        initialModel={initialModel}
+      />
+    );
   }
 
-  return <Dashboard mode="local" userId={null} userEmail={null} />;
+  return <Dashboard mode="local" userId={null} userEmail={null} initialModel={initialModel} />;
 }
 
 function Dashboard({
   mode,
   userId,
   userEmail,
+  initialModel,
 }: {
   mode: "local" | "cloud";
   userId: string | null;
   userEmail: string | null;
+  initialModel?: string;
 }) {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(!!initialModel);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -223,6 +231,7 @@ function Dashboard({
       </main>
 
       <CreateSiteDialog
+        initialChoice={initialModel}
         open={creating}
         onOpenChange={setCreating}
         onCreate={async (name, preset) => {
@@ -381,16 +390,19 @@ function ProjectCard({
 const BLANK = "blank";
 
 function CreateSiteDialog({
+  initialChoice,
   open,
   onOpenChange,
   onCreate,
 }: {
+  initialChoice?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreate: (name: string, preset?: string) => Promise<void>;
 }) {
-  const [name, setName] = useState("Meu site");
-  const [choice, setChoice] = useState<string>(PAGE_PRESETS[0]?.id ?? BLANK);
+  const picked = PAGE_PRESETS.find((p) => p.id === initialChoice);
+  const [name, setName] = useState(picked?.brand ?? "Meu site");
+  const [choice, setChoice] = useState<string>(picked?.id ?? PAGE_PRESETS[0]?.id ?? BLANK);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -483,11 +495,12 @@ function CreateSiteDialog({
                             <Plus className="h-6 w-6" />
                           </div>
                         ) : (
-                          preset.sectionIds.slice(0, 3).map((id) => (
+                          preset.sectionIds.slice(0, 3).map((id, i) => (
                             <VariantPreview
                               key={id}
                               variantId={id}
-                              defaults={getVariant(id)?.defaults ?? {}}
+                              defaults={presetSectionProps(preset, i)}
+                              typography={preset.typography}
 
                               height={36}
                             />
