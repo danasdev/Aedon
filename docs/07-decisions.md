@@ -19,11 +19,11 @@
 - Removido por redundância: faixa de abas de página, menu "…" do topo, seletor de fundo solto no canvas, barra "Seção" dentro do preview, abas Seção/Elemento/Tipografia/Preços, navegação em 3 níveis da biblioteca.
 - Pendência: dividir `PropertiesPanel`, `SectionLibrary` e `Canvas` em arquivos menores; publicação não solicitada.
 
-## Reconstrução da interface (Entropy + ciano gelo)
+## Reconstrução da interface (Entropy + terceira cor)
 
 - Data: 2026-10-29.
 - Estado: aprovada pelo usuário no Figma (estilo) e na escolha de cor; implementada e validada localmente.
-- Fonte: pedido do usuário para refazer tudo, desenhar antes no Figma e se basear nos assets de kinetics.colorion.co; paleta da Entropy mantida; terceira cor escolhida: ciano gelo `#3ccfe0`.
-- Decisão: interface grafite com linguagem visual do Kinetics (Archivo, mono, pílulas com borda física) e cores da Entropy; ciano reservado à interação; logo novo em ink. Interação: barra contextual única no topo do canvas, coluna com Adicionar/Páginas/Camadas/Estilo, "+ Adicionar seção" entre blocos, gaveta "Editar conteúdo" sob demanda, criação de site com modelo.
+- Fonte: pedido do usuário para refazer tudo, desenhar antes no Figma e se basear nos assets de kinetics.colorion.co; paleta da Entropy mantida; terceira cor escolhida: ciano gelo `#3ccfe0`, trocada depois por creme `#e8d9bc` (já usado nos vídeos da empresa; o preto e branco ficava monótono).
+- Decisão: interface grafite com linguagem visual do Kinetics (Archivo, mono, pílulas com borda física) e cores da Entropy; terceira cor reservada à interação no editor; logo novo em ink. Interação: barra contextual única no topo do canvas, coluna com Adicionar/Páginas/Camadas/Estilo, "+ Adicionar seção" entre blocos, gaveta "Editar conteúdo" sob demanda, criação de site com modelo.
 - Substitui: decisões "Interação contextual do editor" e "Interface simplificada do editor" acima.
 - Pendências: reimportar no Figma as telas com a paleta final (limite do plano Starter do Figma MCP atingido); dividir `ContentDrawer.tsx` (campos herdados do antigo painel de propriedades).

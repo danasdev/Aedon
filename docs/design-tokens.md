@@ -8,7 +8,7 @@ Design de referência: Figma "Aedon — Nova interface" (https://www.figma.com/d
   - `void` `#0a0a0a` (fundo), `panel` `#121211`, `surface` `#181817`, `surface-2` `#201f1d`, `hairline` `#2e2d2b` (bordas);
   - `ink` `#f5f4f1` (texto), `ink-muted` `#a3a19b`, `faint` `#6b6964` (rótulos);
   - `grain` `#d8cfbd` só nos rótulos de destaque (eyebrows) e números; `chrome` `#d9d9d6` para um brilho raro;
-  - `ion` `#3ccfe0` (ciano gelo) e `ion-deep` `#1a8a99`: **somente** seleção, foco, item ativo e ação principal (~3% da tela). Nunca no logo, em texto corrido ou como decoração.
+  - `ion` `#e8d9bc` (creme, o mesmo dos vídeos da Entropy) e `ion-deep` `#a18d68`: no editor, seleção, foco, item ativo e ação principal. Na landing pode ter presença maior (palavras de destaque nos títulos, faixa do marquee, bloco do CTA final, brilho atrás da galeria) para quebrar o preto e branco. Nunca no logo nem em texto corrido. Sobre creme, usar `.ae-btn-ink` (pílula escura).
 - Tipografia: Geist para toda a interface (400/500/600), com rótulos em 12 px / 500 (`.ae-eyebrow` em grain, `.ae-label` em ink-muted), sem caixa alta forçada. Archivo 700 em caixa alta só em títulos de exibição (`.ae-display`, `.ae-title`). Mono apenas em atalhos de teclado e no zoom. Nenhum texto da interface abaixo de 12 px.
 - Ícones: Phosphor, peso bold (contexto global em `__root`), importados de `src/components/icons.ts`. Blocos do site mantêm os próprios ícones.
 - Estilo das peças (referência kinetics.colorion.co): botões em pílula com borda inferior "física" (`.ae-btn`, `.ae-btn-primary` com sombra `ion-deep`, sem brilho), chips (`.ae-chip`), cards em leve degradê `panel → surface` com borda fina (`.ae-tile`), controles segmentados (`.ae-seg`).

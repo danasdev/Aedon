@@ -110,7 +110,7 @@ export function EditorShowcase() {
             data-reveal
             style={{ transitionDelay: "80ms" }}
           >
-            Clique. Mude. Pronto.
+            Clique. Mude. <span className="text-ion">Pronto.</span>
           </h2>
         </div>
 
@@ -296,7 +296,7 @@ export function SegmentsBento() {
           className="reveal max-w-xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] sm:text-6xl"
           data-reveal
         >
-          Pronto para o seu negócio.
+          Pronto para o seu <span className="text-ion">negócio.</span>
         </h2>
         <Link to="/projects" className="reveal ae-btn" data-reveal>
           Ver todos os modelos <ArrowRight className="h-4 w-4" />
@@ -349,7 +349,7 @@ export function StepsStrip() {
             className="reveal glass relative flex items-center gap-4 rounded-2xl p-5"
             style={{ transitionDelay: `${i * 140}ms` }}
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-ion/12 text-ion">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-ion text-background shadow-[0_3px_0_var(--ion-deep)]">
               <s.Icon className="h-5 w-5" />
             </span>
             <div>
@@ -400,20 +400,26 @@ export function PricingGlass() {
 /** 6 — Closing line. */
 export function FinalCta() {
   return (
-    <section className="relative mx-auto max-w-[1400px] px-6 py-36 text-center sm:px-10">
-      <h2
-        className="reveal shimmer-text text-5xl font-medium leading-[1.02] tracking-[-0.04em] sm:text-8xl"
+    <section className="relative px-4 pb-24 pt-8 sm:px-8">
+      <div
+        className="reveal relative mx-auto max-w-[1400px] overflow-hidden rounded-[36px] bg-ion px-6 py-28 text-center text-background sm:py-36"
         data-reveal
       >
-        Seu próximo site
-        <br />
-        começa em um clique.
-      </h2>
-      <div className="reveal mt-12" data-reveal style={{ transitionDelay: "150ms" }}>
-        <Link to="/projects" className="group ae-btn ae-btn-primary ae-btn-lg">
-          Criar meu site
-          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-        </Link>
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_80%_0%,rgba(255,255,255,0.55),transparent_60%),radial-gradient(50%_70%_at_10%_110%,rgba(161,141,104,0.55),transparent_70%)]"
+          aria-hidden
+        />
+        <h2 className="relative text-5xl font-medium leading-[1.02] tracking-[-0.04em] sm:text-8xl">
+          Seu próximo site
+          <br />
+          começa em um clique.
+        </h2>
+        <div className="relative mt-12">
+          <Link to="/projects" className="group ae-btn ae-btn-ink ae-btn-lg">
+            Criar meu site
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
       </div>
     </section>
   );

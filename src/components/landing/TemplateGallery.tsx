@@ -91,7 +91,7 @@ export function TemplateGallery({
       const key = new THREE.DirectionalLight(0xfff9e8, 1.4);
       key.position.set(3.5, 4, 5);
       scene.add(key);
-      const rim = new THREE.DirectionalLight(0x499ff5, 1.1);
+      const rim = new THREE.DirectionalLight(0xe8d9bc, 1.1);
       rim.position.set(-5, -2, -3);
       scene.add(rim);
 
@@ -206,6 +206,14 @@ export function TemplateGallery({
         camera.position.z = portrait
           ? Math.max(CFG.cameraDistance, fitDistance)
           : CFG.cameraDistance;
+        // Keep the active card clear of the copy: right of the headline on wide screens,
+        // in the band between headline and caption on phones.
+        const viewH = 2 * Math.tan(halfFov) * camera.position.z;
+        gallery.position.set(
+          portrait ? 0 : viewH * camera.aspect * 0.18,
+          portrait ? -viewH * 0.06 : 0,
+          0,
+        );
         gallery.rotation.x = THREE.MathUtils.degToRad(portrait ? -14 : CFG.galleryRotX);
         gallery.rotation.y = THREE.MathUtils.degToRad(portrait ? -10 : CFG.galleryRotY);
         // Fog starts behind the active card, so it only fades the cards further back.
@@ -285,7 +293,9 @@ export function TemplateGallery({
             const t = THREE.MathUtils.clamp((elapsed - 0.15 - i * 0.08) / 1.15, 0, 1);
             card.intro = 1 - Math.pow(1 - t, 3);
           }
-          card.mat.opacity = card.intro;
+          // Cards already passed slide under the caption, so they fade out of the way.
+          const passed = THREE.MathUtils.clamp(-m - 0.35, 0, 1);
+          card.mat.opacity = card.intro * (1 - passed * 0.85);
 
           const angle = m * CFG.arcStep;
           const isActive = i === active;

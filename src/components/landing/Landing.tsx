@@ -143,7 +143,7 @@ export function Landing() {
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-[background,border-color,backdrop-filter] duration-500 ${
           scrolled
-            ? "border-b border-white/5 bg-background/55 backdrop-blur-xl"
+            ? "border-b border-white/5 bg-background/80 backdrop-blur-xl"
             : "border-b border-transparent"
         }`}
       >
@@ -178,7 +178,7 @@ export function Landing() {
         className="relative"
         style={{ height: `${(SHOWCASE.length - 1) * STEP_VH * 100 + 100}vh` }}
       >
-        <div className="sticky top-0 h-screen overflow-hidden bg-[radial-gradient(120%_90%_at_60%_20%,#16171a_0%,#0a0a0a_60%)]">
+        <div className="sticky top-0 h-screen overflow-hidden bg-[radial-gradient(70%_60%_at_68%_40%,rgba(232,217,188,0.14)_0%,transparent_70%),radial-gradient(120%_90%_at_60%_20%,#16171a_0%,#0a0a0a_60%)]">
           <TemplateGallery
             targetRef={targetRef}
             onActiveChange={setActive}
@@ -202,7 +202,7 @@ export function Landing() {
 
           {/* Intro headline — fades as the gallery starts moving */}
           <div
-            className="pointer-events-none absolute left-6 top-28 max-w-xl sm:left-10 sm:top-32"
+            className="pointer-events-none absolute left-6 right-6 top-24 z-10 max-w-xl sm:left-10 sm:top-32"
             style={{
               opacity: introOpacity,
               transform: `translateY(${(1 - introOpacity) * -24}px)`,
@@ -211,16 +211,18 @@ export function Landing() {
             <p className="ae-eyebrow hero-in" style={{ animationDelay: "200ms" }}>
               Construtor visual de sites
             </p>
-            <h1 className="mt-4 text-[44px] font-medium leading-[1.02] tracking-[-0.03em] sm:text-[64px]">
+            <h1 className="mt-3 text-[36px] font-medium leading-[1.02] tracking-[-0.03em] [text-shadow:0_2px_24px_rgba(10,10,10,0.7)] sm:mt-4 sm:text-[44px] md:text-[64px]">
               <span className="hero-line">
                 <span style={{ animationDelay: "300ms" }}>Sites que parecem</span>
               </span>
               <span className="hero-line">
-                <span style={{ animationDelay: "420ms" }}>caros. Feitos hoje.</span>
+                <span className="text-ion" style={{ animationDelay: "420ms" }}>
+                  caros. Feitos hoje.
+                </span>
               </span>
             </h1>
             <p
-              className="hero-in mt-5 max-w-md text-base text-muted-foreground"
+              className="hero-in mt-4 max-w-md text-sm text-muted-foreground [text-shadow:0_1px_16px_rgba(10,10,10,0.9)] sm:mt-5 sm:text-base"
               style={{ animationDelay: "650ms" }}
             >
               Escolha um modelo pronto para o seu negócio e edite tudo clicando direto no site.
@@ -228,8 +230,11 @@ export function Landing() {
           </div>
 
           {/* Caption of the active template */}
-          <div className="absolute bottom-8 left-6 right-6 flex items-end justify-between gap-6 sm:bottom-10 sm:left-10 sm:right-10">
-            <div key={t.id} className="caption-in max-w-md">
+          <div className="absolute bottom-8 left-6 right-6 z-10 flex items-end justify-between gap-6 sm:bottom-10 sm:left-10 sm:right-10">
+            <div
+              key={t.id}
+              className="caption-in max-w-md [text-shadow:0_1px_16px_rgba(10,10,10,0.85)]"
+            >
               <p className="text-xs tabular-nums text-muted-foreground">
                 {String(active + 1).padStart(2, "0")} / {String(SHOWCASE.length).padStart(2, "0")} ·{" "}
                 {t.segment}
@@ -290,17 +295,19 @@ export function Landing() {
       <PaletteShowcase />
 
       {/* Marquee of segments */}
-      <div className="overflow-hidden border-y border-border py-6">
-        <div
-          ref={marqueeRef}
-          className="flex w-max gap-12 whitespace-nowrap text-4xl font-medium tracking-[-0.02em] text-faint will-change-transform sm:text-6xl"
-        >
-          {[...SHOWCASE, ...SHOWCASE, ...SHOWCASE].map((s, i) => (
-            <span key={i} className="flex items-center gap-12">
-              {s.segment}
-              <span className="h-2 w-2 rounded-full bg-ion" />
-            </span>
-          ))}
+      <div className="overflow-x-clip py-10">
+        <div className="-rotate-[1.5deg] bg-ion py-5 shadow-[0_6px_0_var(--ion-deep)]">
+          <div
+            ref={marqueeRef}
+            className="flex w-max gap-12 whitespace-nowrap text-4xl font-medium tracking-[-0.02em] text-background will-change-transform sm:text-6xl"
+          >
+            {[...SHOWCASE, ...SHOWCASE, ...SHOWCASE].map((s, i) => (
+              <span key={i} className="flex items-center gap-12">
+                {s.segment}
+                <span className="h-2 w-2 rounded-full bg-background" />
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
