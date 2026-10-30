@@ -12,18 +12,22 @@ export const SNAP_H = 800;
 /** How many blocks to render: enough to fill the first screen of the site. */
 const BLOCKS = 3;
 
-function waitForImages(root: HTMLElement) {
+/** Waits for every <img> (forcing lazy ones to load — offscreen they never would), capped. */
+function waitForImages(root: HTMLElement, timeoutMs = 8000) {
   const imgs = Array.from(root.querySelectorAll("img"));
-  return Promise.all(
-    imgs.map((img) =>
-      img.complete
+  const loads = Promise.all(
+    imgs.map((img) => {
+      img.loading = "eager";
+      img.decoding = "sync";
+      return img.complete
         ? Promise.resolve()
         : new Promise<void>((resolve) => {
             img.addEventListener("load", () => resolve(), { once: true });
             img.addEventListener("error", () => resolve(), { once: true });
-          }),
-    ),
+          });
+    }),
   );
+  return Promise.race([loads, new Promise((r) => setTimeout(r, timeoutMs))]);
 }
 
 /**

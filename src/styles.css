@@ -274,7 +274,34 @@
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 
+/* ---- Landing: glass, colour fields, ambient motion ---- */
+.glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.03));
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 30px 80px -30px rgb(0 0 0 / 0.85);
+}
+@keyframes drift { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(6%, -8%, 0) scale(1.15); } }
+.blob { filter: blur(90px); opacity: 0.45; animation: drift 16s ease-in-out infinite alternate; }
+@keyframes float-y { 0%, 100% { translate: -50% 0; } 50% { translate: -50% -8px; } }
+.float-y { animation: float-y 4s ease-in-out infinite; transform: none; }
+@keyframes cursor-path {
+  0% { left: 70%; top: 80%; } 30% { left: 46%; top: 44%; } 45% { left: 46%; top: 44%; transform: scale(0.85); }
+  55% { left: 46%; top: 44%; transform: scale(1); } 75% { left: 58%; top: 14%; } 100% { left: 70%; top: 80%; }
+}
+.cursor-path { animation: cursor-path 7s var(--editor-ease) infinite; }
+.steps-line { background: linear-gradient(90deg, transparent, rgb(60 207 224 / 0.6), transparent); background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.shimmer-text {
+  background: linear-gradient(100deg, var(--ink) 30%, #3ccfe0 45%, #d8a657 55%, var(--ink) 70%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .blob, .float-y, .cursor-path, .steps-line, .shimmer-text { animation: none; }
   .hero-line > span, .hero-in, .caption-in, .scroll-cue { animation: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .ae-flash, .ae-leave, .ae-pop, .ae-check { animation: none; }

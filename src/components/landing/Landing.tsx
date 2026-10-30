@@ -2,39 +2,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "@/components/icons";
 import { AedonLogo } from "@/components/editor/AedonMark";
-import { BASE_PLAN, FEATURES, formatBRL } from "@/lib/pricing/catalog";
 import { TemplateGallery } from "./TemplateGallery";
+import {
+  EditorShowcase,
+  FinalCta,
+  PaletteShowcase,
+  PricingGlass,
+  SegmentsBento,
+  StepsStrip,
+} from "./LandingSections";
 import { SHOWCASE } from "./showcase";
 
 /** Scroll distance (in viewport heights) that moves the gallery by one template. */
 const STEP_VH = 0.62;
 
-const STEPS = [
-  {
-    n: "01",
-    title: "Escolha um modelo",
-    body: "Comece de uma página pronta para o seu tipo de negócio, ou de uma página em branco.",
-  },
-  {
-    n: "02",
-    title: "Clique e troque",
-    body: "Textos, fotos, cores e botões: tudo se edita direto no site, sem painel de propriedades.",
-  },
-  {
-    n: "03",
-    title: "Coloque no ar",
-    body: "O site salva sozinho. Quando estiver pronto, exporte o HTML e publique onde quiser.",
-  },
-];
-
-const STATEMENT =
-  "Seu negócio merece um site que pareça caro. Escolha um modelo, troque as palavras e as fotos, e coloque no ar no mesmo dia.";
-
 export function Landing() {
   const navigate = useNavigate();
   const targetRef = useRef(0);
   const sectionRef = useRef<HTMLElement>(null);
-  const statementRef = useRef<HTMLParagraphElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<import("lenis").default | null>(null);
   const [active, setActive] = useState(0);
@@ -64,20 +49,21 @@ export function Landing() {
         targetRef.current = Math.max(0, Math.min(SHOWCASE.length - 1, p));
         setProgress(Math.max(0, Math.min(1, p / (SHOWCASE.length - 1))));
       }
-      // Statement: words light up as the paragraph crosses the viewport.
-      const st = statementRef.current;
-      if (st) {
-        const r = st.getBoundingClientRect();
-        const t = Math.max(
-          0,
-          Math.min(1, (window.innerHeight * 0.85 - r.top) / (r.height + window.innerHeight * 0.35)),
-        );
-        const words = st.children;
-        for (let i = 0; i < words.length; i++) {
-          const on = Math.max(0, Math.min(1, t * words.length - i));
-          (words[i] as HTMLElement).style.opacity = String(0.16 + on * 0.84);
-        }
-      }
+      // Parallax layers and the editor window that straightens as it scrolls in.
+      const vh = window.innerHeight;
+      document.querySelectorAll<HTMLElement>("[data-parallax]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > vh + 200) return;
+        const offset = r.top + r.height / 2 - vh / 2;
+        el.style.translate = `0 ${(offset * Number(el.dataset.parallax)).toFixed(1)}px`;
+      });
+      document.querySelectorAll<HTMLElement>("[data-tilt]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const t = Math.max(0, Math.min(1, (vh - r.top) / (vh * 0.85)));
+        const target = el.querySelector<HTMLElement>(".tilt-target");
+        if (target)
+          target.style.transform = `rotateX(${((1 - t) * 24).toFixed(2)}deg) scale(${(0.9 + t * 0.1).toFixed(3)})`;
+      });
       // Marquee drifts with the scroll.
       const mq = marqueeRef.current;
       if (mq) mq.style.transform = `translate3d(${-(y * 0.35) % (mq.scrollWidth / 2)}px,0,0)`;
@@ -148,7 +134,6 @@ export function Landing() {
 
   const t = SHOWCASE[active];
   const introOpacity = Math.max(0, 1 - progress * (SHOWCASE.length - 1) * 1.6);
-  const extraFeatures = FEATURES.filter((f) => f.kind === "toggle").slice(0, 3);
 
   return (
     <div className="bg-background text-foreground">
@@ -293,19 +278,8 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Statement — words light up while scrolling */}
-      <section className="mx-auto max-w-5xl px-6 py-40 sm:px-10">
-        <p
-          ref={statementRef}
-          className="text-3xl font-medium leading-[1.2] tracking-[-0.02em] sm:text-5xl"
-        >
-          {STATEMENT.split(" ").map((w, i) => (
-            <span key={i} className="transition-opacity duration-300" style={{ opacity: 0.16 }}>
-              {w}{" "}
-            </span>
-          ))}
-        </p>
-      </section>
+      <EditorShowcase />
+      <PaletteShowcase />
 
       {/* Marquee of segments */}
       <div className="overflow-hidden border-y border-border py-6">
@@ -322,80 +296,10 @@ export function Landing() {
         </div>
       </div>
 
-      {/* How it works */}
-      <section id="como-funciona" className="mx-auto max-w-[1400px] px-6 py-32 sm:px-10">
-        <p className="ae-eyebrow reveal" data-reveal>
-          Como funciona
-        </p>
-        <h2
-          className="reveal mt-4 max-w-2xl text-4xl font-medium tracking-[-0.02em] sm:text-5xl"
-          data-reveal
-          style={{ transitionDelay: "80ms" }}
-        >
-          Três passos. Nenhum deles é código.
-        </h2>
-        <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <div
-              key={s.n}
-              data-reveal
-              className="reveal ae-tile p-7"
-              style={{ transitionDelay: `${150 + i * 120}ms` }}
-            >
-              <span className="text-sm tabular-nums text-ion">{s.n}</span>
-              <h3 className="mt-10 text-xl font-medium">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="preco" className="mx-auto max-w-[1400px] px-6 pb-32 sm:px-10">
-        <div className="reveal ae-tile grid gap-10 p-8 sm:p-12 md:grid-cols-2" data-reveal>
-          <div>
-            <p className="ae-eyebrow">Preço</p>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-5xl font-medium tracking-[-0.03em]">
-                {formatBRL(BASE_PLAN.priceCents)}
-              </span>
-              <span className="text-sm text-muted-foreground">/mês</span>
-            </div>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              {BASE_PLAN.description} Adicione páginas, componentes e recursos só quando precisar.
-            </p>
-          </div>
-          <ul className="flex flex-col justify-end gap-3 text-sm">
-            {extraFeatures.map((f) => (
-              <li
-                key={f.key}
-                className="flex items-center justify-between gap-6 border-b border-border pb-3 text-muted-foreground"
-              >
-                <span>{f.label}</span>
-                <span className="tabular-nums text-foreground">+{formatBRL(f.unitPriceCents)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="mx-auto max-w-[1400px] px-6 pb-40 text-center sm:px-10">
-        <h2
-          className="reveal text-5xl font-medium leading-[1.02] tracking-[-0.03em] sm:text-7xl"
-          data-reveal
-        >
-          Seu próximo site
-          <br />
-          começa em um clique.
-        </h2>
-        <div className="reveal mt-10" data-reveal style={{ transitionDelay: "150ms" }}>
-          <Link to="/projects" className="group ae-btn ae-btn-primary ae-btn-lg">
-            Criar meu site
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-      </section>
+      <SegmentsBento />
+      <StepsStrip />
+      <PricingGlass />
+      <FinalCta />
 
       <footer className="border-t border-border">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 text-xs text-muted-foreground sm:px-10">
